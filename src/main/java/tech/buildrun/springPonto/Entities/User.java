@@ -3,12 +3,15 @@ package tech.buildrun.springPonto.Entities;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import tech.buildrun.springPonto.controller.dto.LoginRequest;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.JoinColumn;
@@ -27,7 +30,7 @@ public class User {
 
     @Column(name = "user_name", unique = true, nullable = false) // Adicionei nullable = false para garantir que não
                                                                  // seja nulo
-    private String userName;
+    private String username;
 
     @Column(name = "pass_word", nullable = false) // Adicionei nullable = false para garantir que não seja nulo
     private String passWord;
@@ -57,11 +60,11 @@ public class User {
     }
 
     public String getUserName() {
-        return userName;
+        return username;
     }
 
     public void setUserName(String userName) {
-        this.userName = userName;
+        this.username = userName;
     }
 
     public String getPassWord() {
@@ -78,5 +81,11 @@ public class User {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public boolean isLoginCorrect(LoginRequest loginRequest, PasswordEncoder passwordEncoder){
+
+       return passwordEncoder.matches(loginRequest.password(), this.passWord);
+
     }
 }

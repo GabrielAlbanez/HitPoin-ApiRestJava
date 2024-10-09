@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 
 
 @Repository
-public interface RoleRepository extends JpaRepository<Role, Long> { // Especificando a entidade e o tipo da chave primária
+public interface RoleRepository extends JpaRepository<Role, Long> {
+
+    Role findByName(String name); // Especificando a entidade e o tipo da chave primária
     // Você pode adicionar métodos adicionais de consulta aqui, se necessário
 }
