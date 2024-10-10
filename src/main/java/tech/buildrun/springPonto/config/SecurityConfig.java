@@ -31,7 +31,7 @@ public class SecurityConfig {
     // dos arquivos definidos nas propriedades da aplicação.
     @Value("${jwt.public.key}")
     private RSAPublicKey publicKey;
-    
+
     @Value("${jwt.private.key}")
     private RSAPrivateKey privateKey;
 
@@ -39,28 +39,30 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // Configurações de segurança para todas as requisições
         http
-            // Exige autenticação para qualquer requisição
-            .authorizeHttpRequests(authorize -> authorize
-            // esse request Matchers server para deixar essa rota publica
-            //pq depois que vc implmenta o secury spring ele bloqueia todas as rotas
-            .requestMatchers(HttpMethod.POST, "/Login").permitAll()
-            .anyRequest().authenticated())
-            
-            // Configura OAuth2 para usar JWT como forma de autenticação
-            .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(Customizer.withDefaults()))
-            
-            // Define o gerenciamento de sessão como 'stateless', adequado para APIs REST
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Exige autenticação para qualquer requisição
+                .authorizeHttpRequests(authorize -> authorize
+                        // esse request Matchers server para deixar essa rota publica
+                        // pq depois que vc implmenta o secury spring ele bloqueia todas as rotas
+                        .requestMatchers(HttpMethod.POST, "/CreateUser").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/Login").permitAll()
+                        .anyRequest().authenticated())
 
-        // Caso necessário, desative CSRF para permitir requisições sem verificação
-        // (útil para APIs que não utilizam cookies, como APIs RESTful)
-        .csrf(csrf -> csrf.disable());
-        
+                // Configura OAuth2 para usar JWT como forma de autenticação
+                .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(Customizer.withDefaults()))
+
+                // Define o gerenciamento de sessão como 'stateless', adequado para APIs REST
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // Caso necessário, desative CSRF para permitir requisições sem verificação
+                // (útil para APIs que não utilizam cookies, como APIs RESTful)
+                .csrf(csrf -> csrf.disable());
+
         return http.build();
     }
 
     @Bean
-    // Este Bean é responsável por descriptografar o token JWT usando a chave pública.
+    // Este Bean é responsável por descriptografar o token JWT usando a chave
+    // pública.
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withPublicKey(publicKey).build();
     }

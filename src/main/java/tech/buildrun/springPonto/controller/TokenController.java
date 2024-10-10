@@ -41,7 +41,7 @@ public class TokenController {
 
         var user = userRepository.findAllByUsername(login.username());
 
-        if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, bCryptPasswordEncoder)) {
+        if (user.isEmpty() || !user.get().isLoginCorrect(login, bCryptPasswordEncoder)) {
             throw new BadCredentialsException("user or passowrd is invalid");
         }
 

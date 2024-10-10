@@ -29,6 +29,7 @@ public class User {
 
     @Column(unique = true)
     private String username;
+
     private String password;
 
     // Este Set é semelhante a uma lista, mas não permite dados duplicados.
