@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -39,7 +40,11 @@ public class SecurityConfig {
         // Configurações de segurança para todas as requisições
         http
             // Exige autenticação para qualquer requisição
-            .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+            .authorizeHttpRequests(authorize -> authorize
+            // esse request Matchers server para deixar essa rota publica
+            //pq depois que vc implmenta o secury spring ele bloqueia todas as rotas
+            .requestMatchers(HttpMethod.POST, "/Login").permitAll()
+            .anyRequest().authenticated())
             
             // Configura OAuth2 para usar JWT como forma de autenticação
             .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(Customizer.withDefaults()))
