@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,6 +25,7 @@ import java.security.interfaces.RSAPublicKey;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     // Injeção das chaves RSA públicas e privadas, usadas para criptografar
@@ -43,7 +45,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // esse request Matchers server para deixar essa rota publica
                         // pq depois que vc implmenta o secury spring ele bloqueia todas as rotas
-                        .requestMatchers(HttpMethod.POST, "/CreateUser").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/CreateUser").permitAll()
                         .requestMatchers(HttpMethod.POST, "/Login").permitAll()
                         .anyRequest().authenticated())
 

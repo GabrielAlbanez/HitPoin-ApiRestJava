@@ -10,12 +10,16 @@ import tech.buildrun.springPonto.Repository.RoleRepository;
 import tech.buildrun.springPonto.Repository.UserRepository;
 import tech.buildrun.springPonto.controller.dto.CreateUser;
 import java.util.Set;
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/usuarios")
@@ -36,6 +40,7 @@ public class UserController {
 
     @Transactional
     @PostMapping("/CreateUser")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<String> createUser(@RequestBody CreateUser dataUser) {
 
         var basicRole = roleRepository.findByName(Role.Values.BASIC.name());
@@ -52,8 +57,18 @@ public class UserController {
         user.setRoles(Set.of(basicRole));
         userRepository.save(user);
 
-
         return ResponseEntity.ok("usuario criado com sucesso");
+    }
+
+    @GetMapping("/allUsers")
+    // protege a rota, so usuario admin pode acessar
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<List<User>> ListUsers() {
+
+        var alluser = userRepository.findAll();
+
+        return ResponseEntity.ok(alluser);
+
     }
 
 }
