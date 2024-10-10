@@ -29,28 +29,26 @@ public class AdminUserConfig implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-
         var roleAdmin = roleRepository.findByName(Role.Values.ADMIN.name());
 
-        System.out.println("role" + roleAdmin);
+        System.out.println("role: " + roleAdmin);
 
-        var userAdmin = userRepository.findAllByUsername("admin");
+        var userAdmin = userRepository.findAllByUsername("ADMIN");
 
         userAdmin.ifPresentOrElse(
-                user  -> {
+                user -> {
                     System.out.println("este usuário já existe");
                 },
-
                 () -> {
                     var user = new User();
-                    user.setUserName("admin");
+                    user.setUserName("ADMIN");
                     user.setPassWord(bCryptPasswordEncoder.encode("123")); // Passe a senha a ser codificada
                     user.setRoles(Set.of(roleAdmin));
                     userRepository.save(user);
-
                 });
 
-        throw new UnsupportedOperationException("Unimplemented method 'run'");
+        // Remova a linha abaixo:
+        // throw new UnsupportedOperationException("Unimplemented method 'run'");
     }
 
 }

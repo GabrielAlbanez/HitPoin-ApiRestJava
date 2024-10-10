@@ -23,17 +23,13 @@ import jakarta.persistence.FetchType;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO) // Mudei para AUTO; o suporte a UUID depende da configuração do
-                                                    // banco de dados
-    @Column(name = "user_id", updatable = false, nullable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "user_id")
     private UUID userId;
 
-    @Column(name = "user_name", unique = true, nullable = false) // Adicionei nullable = false para garantir que não
-                                                                 // seja nulo
+    @Column(unique = true)
     private String username;
-
-    @Column(name = "pass_word", nullable = false) // Adicionei nullable = false para garantir que não seja nulo
-    private String passWord;
+    private String password;
 
     // Este Set é semelhante a uma lista, mas não permite dados duplicados.
     // Relação muitos para muitos: um usuário pode ter várias funções (roles) e uma
@@ -44,10 +40,7 @@ public class User {
     // entidades relacionadas (neste caso, as roles) serão carregadas
     // automaticamente junto com a entidade User
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinTable(name = "tb_users_role", joinColumns = @JoinColumn(name = "user_id"), // Chave estrangeira para o usuário
-                                                                                    // na tabela intermediária
-            inverseJoinColumns = @JoinColumn(name = "role_id")// Chave estrangeira para a função na tabela intermediária
-    )
+    @JoinTable(name = "tb_users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
     // Getters e Setters
@@ -68,11 +61,11 @@ public class User {
     }
 
     public String getPassWord() {
-        return passWord;
+        return password;
     }
 
     public void setPassWord(String passWord) {
-        this.passWord = passWord;
+        this.password = passWord;
     }
 
     public Set<Role> getRoles() {
@@ -83,9 +76,9 @@ public class User {
         this.roles = roles;
     }
 
-    public boolean isLoginCorrect(LoginRequest loginRequest, PasswordEncoder passwordEncoder){
+    public boolean isLoginCorrect(LoginRequest loginRequest, PasswordEncoder passwordEncoder) {
 
-       return passwordEncoder.matches(loginRequest.password(), this.passWord);
+        return passwordEncoder.matches(loginRequest.password(), this.password);
 
     }
 }

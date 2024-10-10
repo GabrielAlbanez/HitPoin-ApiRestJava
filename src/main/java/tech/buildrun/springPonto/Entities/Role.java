@@ -16,7 +16,6 @@ public class Role {
     @Column(name = "role_id")
     private Long roleId;
 
-    @Column(name = "name", nullable = false) // O nome da função, não deve ser nulo
     private String name;
 
     // Getters e Setters
@@ -41,7 +40,7 @@ public class Role {
         BASIC(1L),
         ADMIN(2L);
 
-        private Long roleId; // Mudando para private
+        Long roleId;
 
         // Construtor do Enum
         Values(Long roleId) {
