@@ -49,7 +49,7 @@ public class TokenController {
 
         var now = Instant.now();
         // tepo de duração do token
-        var expiressIn = 300;
+        var expiressIn = 3000;
 
         var scopes = user.get().getRoles().stream().map(Role::getName).collect(Collectors.joining(""));
 
