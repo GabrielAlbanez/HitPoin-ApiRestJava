@@ -10,6 +10,7 @@ import tech.buildrun.springPonto.Entities.User;
 import tech.buildrun.springPonto.Repository.RoleRepository;
 import tech.buildrun.springPonto.Repository.UserRepository;
 import tech.buildrun.springPonto.controller.dto.CreateUser;
+import tech.buildrun.springPonto.controller.dto.HitPointRequest;
 import tech.buildrun.springPonto.services.HitPointService;
 
 import java.util.Set;
@@ -60,10 +61,13 @@ public class UserController {
             return ResponseEntity.ok("Ja temos usuarios logados com esse nome");
         }
 
+     
+
         var user = new User();
         user.setUserName(dataUser.username());
         user.setPassWord(bCryptPasswordEncoder.encode(dataUser.password()));
         user.setRoles(Set.of(basicRole));
+        
         userRepository.save(user);
 
         return ResponseEntity.ok("usuario criado com sucesso");
@@ -82,7 +86,7 @@ public class UserController {
 
     @Transactional
     @PostMapping("/HitPoint")
-    public ResponseEntity<HitPoint> baterPonto(Authentication authentication) {
+    public ResponseEntity<HitPoint> baterPonto(@RequestBody HitPointRequest dataPonto,Authentication authentication) {
         // Recupera o nome de usuário a partir da autenticação
         System.out.println("Autenticação: " + authentication);
         System.out.println("Nome pego: " + authentication.getName());
@@ -94,7 +98,11 @@ public class UserController {
 
         // Bate o ponto
 
-        HitPoint hitPoint = hitPointService.baterPonto(user.getUserId());
+
+       String pontoName = dataPonto.tipoPonto();
+
+
+        HitPoint hitPoint = hitPointService.baterPonto(pontoName ,user.getUserId());
 
         return ResponseEntity.ok(hitPoint);
     }

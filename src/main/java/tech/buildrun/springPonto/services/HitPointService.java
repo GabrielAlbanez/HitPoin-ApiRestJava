@@ -25,22 +25,22 @@ public class HitPointService {
     @Autowired
     private UserRepository userRepository;
 
-    public HitPoint baterPonto(UUID userId) {
+    public HitPoint baterPonto(String dataPonto ,UUID userId) {
         Optional<User> userOptional = userRepository.findById(userId);
         if (userOptional.isPresent()) {
             User usuario = userOptional.get();
 
             // caso exista o usuario ele vai criar a instacia do ponto
 
-           
+            System.out.println("tipo ponto" + dataPonto);
 
             HitPoint hitPoint = new HitPoint();
+            hitPoint.setTipo(dataPonto);
             hitPoint.setUser(usuario);
 
-          
-     
+           
 
-            return hitPointRepository.save(hitPoint);
+            return  hitPointRepository.save(hitPoint);
         } else {
             throw new RuntimeException("Usuário não encontrado.");
         }

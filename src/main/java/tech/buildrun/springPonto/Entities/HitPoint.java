@@ -12,7 +12,7 @@ import org.hibernate.annotations.CreationTimestamp; // Importação correta para
 import java.time.LocalDateTime; // Importação para LocalDateTime
 
 @Entity
-@Table(name = "table_hitPoint")
+@Table(name = "tipo_ponto")
 public class HitPoint {
 
     @Id
@@ -27,6 +27,9 @@ public class HitPoint {
     @CreationTimestamp // Anotação correta para preencher automaticamente
     @Column(name = "created_at") // Nome da coluna no banco, se necessário
     private LocalDateTime timeStamp; // Usando LocalDateTime para data e hora
+
+    @Column(name = "tipo_ponto")
+    private String tipoPonto;
 
     // Getters e Setters
     public Long getPointId() {
@@ -51,5 +54,13 @@ public class HitPoint {
 
     public void setTimeStamp(LocalDateTime timeStamp) {
         this.timeStamp = timeStamp; // Opcional, mas geralmente não é necessário, pois é gerado automaticamente
+    }
+
+    public void setTipo(String tipo) {
+        this.tipoPonto = tipo;
+    }
+
+    public String getTipoPonto() {
+        return tipoPonto;
     }
 }
