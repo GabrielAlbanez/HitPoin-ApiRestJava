@@ -9,6 +9,9 @@ import jakarta.persistence.ManyToOne; // Supondo que o relacionamento com User s
 import jakarta.persistence.Column; // Para a anotação @Column
 import jakarta.persistence.JoinColumn; // Importação correta para JoinColumn
 import org.hibernate.annotations.CreationTimestamp; // Importação correta para CreationTimestamp
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import java.time.LocalDateTime; // Importação para LocalDateTime
 
 @Entity
@@ -20,6 +23,7 @@ public class HitPoint {
     @Column(name = "point_id")
     private Long pointId;
 
+    @JsonBackReference
     @ManyToOne // Adicionando a anotação para o relacionamento com User
     @JoinColumn(name = "user_id") // relata qual vai ser o nome do campo que vai guar a chave estrageira do usario - no caso o id
     private User user;

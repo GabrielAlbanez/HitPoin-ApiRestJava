@@ -25,7 +25,8 @@ public interface UserRepository extends JpaRepository<User, UUID> { // Especific
     Optional<User> findUserWithPoints(@Param("userId") UUID userId);
 
     // Método para encontrar todos os usuários com seus pontos
-    @Query("SELECT u FROM User u FULL JOIN FETCH u.pontos")
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.pontos")
     List<User> findAllWithPoints();
+    
 
 }

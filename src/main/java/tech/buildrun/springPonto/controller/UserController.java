@@ -80,6 +80,9 @@ public class UserController {
 
         var alluser = userRepository.findAllWithPoints();
 
+
+
+
         return ResponseEntity.ok(alluser);
 
     }
