@@ -19,6 +19,7 @@ public interface UserRepository extends JpaRepository<User, UUID> { // Especific
 
     Optional<User> findAllByUsername(String username);
 
+
     Optional<User> findByUserId(UUID userId);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.pontos WHERE u.userId = :userId")
