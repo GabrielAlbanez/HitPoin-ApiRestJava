@@ -1,5 +1,6 @@
 package tech.buildrun.springPonto.Entities;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import tech.buildrun.springPonto.controller.dto.LoginRequest;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.CascadeType; // Import necessário para CascadeType
@@ -43,6 +45,11 @@ public class User {
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "tb_users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Column(name = "pontos")
+    
+    private List<HitPoint> pontos;
 
     // Getters e Setters
     public UUID getUserId() {
@@ -81,5 +88,13 @@ public class User {
 
         return passwordEncoder.matches(loginRequest.password(), this.password);
 
+    }
+
+    public void setListPoint(List<HitPoint> listDePontos) {
+        this.pontos = listDePontos;
+    }
+
+    public List<HitPoint> geHitPoints() {
+        return pontos;
     }
 }
