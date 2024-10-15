@@ -2,7 +2,6 @@ package tech.buildrun.springPonto.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.persistence.metamodel.SetAttribute;
 import jakarta.transaction.Transactional;
 import tech.buildrun.springPonto.Entities.HitPoint;
 import tech.buildrun.springPonto.Entities.Role;
@@ -12,6 +11,7 @@ import tech.buildrun.springPonto.Repository.UserRepository;
 import tech.buildrun.springPonto.controller.dto.CreateUser;
 import tech.buildrun.springPonto.controller.dto.HitPointRequest;
 import tech.buildrun.springPonto.controller.dto.RequestCreateUser;
+import tech.buildrun.springPonto.controller.dto.RequestGetUser;
 import tech.buildrun.springPonto.controller.dto.RequestHitPoint;
 import tech.buildrun.springPonto.services.HitPointService;
 
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/usuarios")
@@ -62,11 +62,13 @@ public class UserController {
         var existingUserWithEmmail = userRepository.findByEmail(dataUser.email());
 
         if (existingUserWithUsername.isPresent()) {
-            return ResponseEntity.ok(new RequestCreateUser(Optional.empty(), "Ja temos usuarios logados com esse nome"));
+            return ResponseEntity
+                    .ok(new RequestCreateUser(Optional.empty(), "Ja temos usuarios logados com esse nome"));
         }
 
         if (existingUserWithEmmail.isPresent()) {
-            return ResponseEntity.ok(new RequestCreateUser(Optional.empty(), "Ja temos usuarios logados com esse email"));
+            return ResponseEntity
+                    .ok(new RequestCreateUser(Optional.empty(), "Ja temos usuarios logados com esse email"));
         }
 
         var user = new User();
@@ -112,6 +114,21 @@ public class UserController {
         HitPoint hitPoint = hitPointService.baterPonto(pontoName, user.getUserId());
 
         return ResponseEntity.ok(new RequestHitPoint(hitPoint, "ponto batido com sucesso"));
+    }
+
+    @Transactional
+    @PostMapping("/getUser")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<Optional<User>> ListUserByid(@RequestBody RequestGetUser data) {
+
+        var user = userRepository.findById(data.id());
+        System.out.println("Usuário encontrado: " + user);
+
+        if (user.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(user);
     }
 
 }

@@ -30,4 +30,6 @@ public interface UserRepository extends JpaRepository<User, UUID> { // Especific
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.pontos")
     List<User> findAllWithPoints();
 
+   
+
 }
