@@ -34,6 +34,9 @@ public class User {
     @Column(unique = true)
     private String username;
 
+    @Column(unique = true, name = "email")
+    private String email;
+
     private String password;
 
     // Este Set é semelhante a uma lista, mas não permite dados duplicados.
@@ -98,5 +101,13 @@ public class User {
 
     public List<HitPoint> geHitPoints() {
         return pontos;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

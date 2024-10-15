@@ -19,8 +19,9 @@ public interface UserRepository extends JpaRepository<User, UUID> { // Especific
 
     Optional<User> findAllByUsername(String username);
 
-
     Optional<User> findByUserId(UUID userId);
+
+    Optional<User> findByEmail(String email);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.pontos WHERE u.userId = :userId")
     Optional<User> findUserWithPoints(@Param("userId") UUID userId);
@@ -28,6 +29,5 @@ public interface UserRepository extends JpaRepository<User, UUID> { // Especific
     // Método para encontrar todos os usuários com seus pontos
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.pontos")
     List<User> findAllWithPoints();
-    
 
 }

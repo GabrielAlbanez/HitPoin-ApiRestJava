@@ -11,6 +11,8 @@ import tech.buildrun.springPonto.Repository.RoleRepository;
 import tech.buildrun.springPonto.Repository.UserRepository;
 import tech.buildrun.springPonto.controller.dto.CreateUser;
 import tech.buildrun.springPonto.controller.dto.HitPointRequest;
+import tech.buildrun.springPonto.controller.dto.RequestCreateUser;
+import tech.buildrun.springPonto.controller.dto.RequestHitPoint;
 import tech.buildrun.springPonto.services.HitPointService;
 
 import java.util.Set;
@@ -51,26 +53,32 @@ public class UserController {
     @Transactional
     @PostMapping("/CreateUser")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    public ResponseEntity<String> createUser(@RequestBody CreateUser dataUser) {
+    public ResponseEntity<RequestCreateUser> createUser(@RequestBody CreateUser dataUser) {
 
         var basicRole = roleRepository.findByName(Role.Values.BASIC.name());
 
-        var existingUser = userRepository.findAllByUsername(dataUser.username());
+        var existingUserWithUsername = userRepository.findAllByUsername(dataUser.username());
 
-        if (existingUser.isPresent()) {
-            return ResponseEntity.ok("Ja temos usuarios logados com esse nome");
+        var existingUserWithEmmail = userRepository.findByEmail(dataUser.email());
+
+        if (existingUserWithUsername.isPresent()) {
+            return ResponseEntity.ok(new RequestCreateUser(Optional.empty(), "Ja temos usuarios logados com esse nome"));
         }
 
-     
+        if (existingUserWithEmmail.isPresent()) {
+            return ResponseEntity.ok(new RequestCreateUser(Optional.empty(), "Ja temos usuarios logados com esse email"));
+        }
 
         var user = new User();
         user.setUserName(dataUser.username());
         user.setPassWord(bCryptPasswordEncoder.encode(dataUser.password()));
         user.setRoles(Set.of(basicRole));
-        
+        user.setEmail(dataUser.email());
         userRepository.save(user);
 
-        return ResponseEntity.ok("usuario criado com sucesso");
+        Optional<User> useradata = Optional.ofNullable(user);
+
+        return ResponseEntity.ok(new RequestCreateUser(useradata, "usuario criado com sucesso"));
     }
 
     @GetMapping("/allUsers")
@@ -80,16 +88,14 @@ public class UserController {
 
         var alluser = userRepository.findAllWithPoints();
 
-
-
-
         return ResponseEntity.ok(alluser);
 
     }
 
     @Transactional
     @PostMapping("/HitPoint")
-    public ResponseEntity<HitPoint> baterPonto(@RequestBody HitPointRequest dataPonto,Authentication authentication) {
+    public ResponseEntity<RequestHitPoint> baterPonto(@RequestBody HitPointRequest dataPonto,
+            Authentication authentication) {
         // Recupera o nome de usuário a partir da autenticação
         System.out.println("Autenticação: " + authentication);
         System.out.println("Nome pego: " + authentication.getName());
@@ -101,13 +107,11 @@ public class UserController {
 
         // Bate o ponto
 
+        String pontoName = dataPonto.tipoPonto();
 
-       String pontoName = dataPonto.tipoPonto();
+        HitPoint hitPoint = hitPointService.baterPonto(pontoName, user.getUserId());
 
-
-        HitPoint hitPoint = hitPointService.baterPonto(pontoName ,user.getUserId());
-
-        return ResponseEntity.ok(hitPoint);
+        return ResponseEntity.ok(new RequestHitPoint(hitPoint, "ponto batido com sucesso"));
     }
 
 }
