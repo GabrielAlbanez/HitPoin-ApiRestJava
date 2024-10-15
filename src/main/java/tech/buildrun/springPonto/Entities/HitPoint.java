@@ -13,6 +13,7 @@ import org.hibernate.annotations.CreationTimestamp; // Importação correta para
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.time.LocalDateTime; // Importação para LocalDateTime
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "tipo_ponto")
@@ -25,15 +26,28 @@ public class HitPoint {
 
     @JsonBackReference
     @ManyToOne // Adicionando a anotação para o relacionamento com User
-    @JoinColumn(name = "user_id") // relata qual vai ser o nome do campo que vai guar a chave estrageira do usario - no caso o id
+    @JoinColumn(name = "user_id") // relata qual vai ser o nome do campo que vai guar a chave estrageira do usario
+                                  // - no caso o id
     private User user;
 
-    @CreationTimestamp // Anotação correta para preencher automaticamente
-    @Column(name = "created_at") // Nome da coluna no banco, se necessário
-    private LocalDateTime timeStamp; // Usando LocalDateTime para data e hora
+    // Anotação correta para preencher automaticamente
 
     @Column(name = "tipo_ponto")
     private String tipoPonto;
+
+    @Column(name = "hora_ponto")
+    private String hora;
+
+    @Column(name = "dia_ponto")
+    private Integer  dia;
+
+    @Column(name = "mes_ponto")
+    private Integer mes;
+
+    @Column(name = "ano_ponto")
+    private Integer ano;
+
+   
 
     // Getters e Setters
     public Long getPointId() {
@@ -52,12 +66,36 @@ public class HitPoint {
         this.user = user;
     }
 
-    public LocalDateTime getTimeStamp() {
-        return timeStamp;
+    public int getDia() {
+        return dia;
     }
 
-    public void setTimeStamp(LocalDateTime timeStamp) {
-        this.timeStamp = timeStamp; // Opcional, mas geralmente não é necessário, pois é gerado automaticamente
+    public String getHora() {
+        return hora;
+    }
+
+    public void setDia(int dia) {
+        this.dia = dia;
+    }
+
+    public void setHora(String hora) {
+        this.hora = hora;
+    }
+
+    public Integer getAno() {
+        return ano;
+    }
+
+    public Integer getMes() {
+        return mes;
+    }
+
+    public void setAno(Integer ano) {
+        this.ano = ano;
+    }
+
+    public void setMes(Integer mes) {
+        this.mes = mes;
     }
 
     public void setTipo(String tipo) {
