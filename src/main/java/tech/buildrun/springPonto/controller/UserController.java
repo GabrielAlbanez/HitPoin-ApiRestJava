@@ -61,6 +61,10 @@ public class UserController {
 
         var existingUserWithEmmail = userRepository.findByEmail(dataUser.email());
 
+        var cargHoraria = dataUser.cargaHoraria();
+
+        var cargo = dataUser.cargo();
+
         if (existingUserWithUsername.isPresent()) {
             return ResponseEntity
                     .ok(new RequestCreateUser(Optional.empty(), "Ja temos usuarios logados com esse nome"));
@@ -76,6 +80,8 @@ public class UserController {
         user.setPassWord(bCryptPasswordEncoder.encode(dataUser.password()));
         user.setRoles(Set.of(basicRole));
         user.setEmail(dataUser.email());
+        user.setCargaHoraria(cargHoraria);
+        user.setCargo(cargo);
         userRepository.save(user);
 
         Optional<User> useradata = Optional.ofNullable(user);

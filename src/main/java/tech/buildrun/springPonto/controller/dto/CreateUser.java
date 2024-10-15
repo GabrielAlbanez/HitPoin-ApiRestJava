@@ -1,5 +1,5 @@
 package tech.buildrun.springPonto.controller.dto;
 
-public record CreateUser(String username, String password, String email) {
+public record CreateUser(String username, String password, String email, String cargo, String cargaHoraria) {
     
 }

@@ -38,6 +38,13 @@ public class User {
     private String email;
 
     private String password;
+    
+    @Column(name = "cargo_user")
+    private String cargo;
+
+    @Column(name = "carga_horaria")
+    private String cargaHoraria;
+
 
     // Este Set é semelhante a uma lista, mas não permite dados duplicados.
     // Relação muitos para muitos: um usuário pode ter várias funções (roles) e uma
@@ -55,6 +62,24 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Column(name = "pontos")
     private List<HitPoint> pontos;
+
+
+    public String getCargaHoraria() {
+        return cargaHoraria;
+    }
+
+    public void setCargaHoraria(String cargaHoraria) {
+        this.cargaHoraria = cargaHoraria;
+    }
+
+    public void setCargo(String cargo) {
+        this.cargo = cargo;
+    }
+
+    public String getCargo() {
+        return cargo;
+    }
+    
 
     // Getters e Setters
     public UUID getUserId() {
