@@ -117,6 +117,7 @@ public class UserController {
 
         String pontoName = dataPonto.tipoPonto();
 
+
         HitPoint hitPoint = hitPointService.baterPonto(pontoName, user.getUserId());
 
         return ResponseEntity.ok(new RequestHitPoint(hitPoint, "ponto batido com sucesso"));

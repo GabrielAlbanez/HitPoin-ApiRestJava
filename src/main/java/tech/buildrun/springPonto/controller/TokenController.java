@@ -26,8 +26,6 @@ public class TokenController {
 
     private UserRepository userRepository;
 
-    private LoginRequest loginRequest;
-
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public TokenController(JwtEncoder jwtEncoder,
@@ -47,31 +45,33 @@ public class TokenController {
 
         System.out.println("usuario :  " + user);
 
-
+        // Verifica se o usuário existe e se a senha está correta
         if (user.isEmpty() || !user.get().isLoginCorrect(login, bCryptPasswordEncoder)) {
-            throw new BadCredentialsException("user or passowrd is invalid");
+            // Retorna mensagem amigável se o usuário ou a senha estiverem incorretos
+            return ResponseEntity
+                    .status(401) // Código de status para Unauthorized
+                    .body(new LoginResponse(null, 0, "Usuário ou senha inválidos"));
         }
 
         var now = Instant.now();
-        // tepo de duração do token
+        // Tempo de duração do token
         var expiressIn = 3000;
 
-        var scopes = user.get().getRoles().stream().map(Role::getName).collect(Collectors.joining(""));
+        var scopes = user.get().getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.joining(" ")); // Adiciona espaço entre os scopes
 
-        // essa var vai determina os atributos do jwt
+        // Essa var vai determinar os atributos do JWT
         var claims = JwtClaimsSet.builder()
                 .subject(user.get().getUserId().toString())
-                .issuer("token gerado pelo bakcEnd")
+                .issuer("token gerado pelo backEnd")
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expiressIn))
-                .claim("scope",scopes)
+                .claim("scope", scopes)
                 .build();
-                
 
         var jwt = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 
         return ResponseEntity.ok(new LoginResponse(jwt, expiressIn, "Login realizado com sucesso"));
-
     }
-
 }

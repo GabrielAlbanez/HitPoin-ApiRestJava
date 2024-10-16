@@ -38,7 +38,6 @@ public class HitPointService {
 
             LocalDateTime dataAtual = LocalDateTime.now();
 
-
             int dia = dataAtual.getDayOfMonth();
 
             int mes = dataAtual.getMonthValue(); // 1 a 12
@@ -60,5 +59,7 @@ public class HitPointService {
             throw new RuntimeException("Usuário não encontrado.");
         }
     }
+
+    
 
 }
