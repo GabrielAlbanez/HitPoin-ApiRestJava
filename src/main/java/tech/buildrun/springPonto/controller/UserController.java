@@ -169,7 +169,7 @@ public class UserController {
         passwordResetTokenRepository.save(passwordResetToken);
 
         // Enviar e-mail com o link de redefinição
-        String resetLink = "http://seusite.com/reset-password?token=" + token;
+        String resetLink = "http://localhost:3000/Password/Reset?token=" + token;
         emailService.sendEmail(user.getEmail(), "Redefinição de Senha",
                 "Clique no link para redefinir sua senha: " + resetLink);
 
