@@ -17,6 +17,7 @@ import tech.buildrun.springPonto.controller.dto.RequestCreateUser;
 import tech.buildrun.springPonto.controller.dto.RequestGetUser;
 import tech.buildrun.springPonto.controller.dto.RequestHitPoint;
 import tech.buildrun.springPonto.controller.dto.ResetPasswordRequest;
+import tech.buildrun.springPonto.services.EmailService;
 import tech.buildrun.springPonto.services.HitPointService;
 
 import java.util.Set;
@@ -45,17 +46,19 @@ public class UserController {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final HitPointService hitPointService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
 
     // tem que fazer esse construtor para passar o repoitory do jpa e iguala o
     // atributo da classe para a gente poder usar os metodos aq
     public UserController(UserRepository userRepository, RoleRepository roleRepository,
             BCryptPasswordEncoder bCryptPasswordEncoder, HitPointService hitPointService,
-            PasswordResetTokenRepository passwordResetTokenRepository) {
+            PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.hitPointService = hitPointService;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
 
     }
 
@@ -146,12 +149,15 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @Transactional
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         String email = request.getEmail();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com o e-mail: " + email));
 
+
+        
         // Gerar um token de redefinição de senha
         String token = UUID.randomUUID().toString();
 
@@ -163,20 +169,22 @@ public class UserController {
         passwordResetTokenRepository.save(passwordResetToken);
 
         // Enviar e-mail com o link de redefinição
-        // String resetLink = "http://seusite.com/reset-password?token=" + token;
-        // emailService.sendEmail(user.getEmail(), "Redefinição de Senha",
-        //         "Clique no link para redefinir sua senha: " + resetLink);
+        String resetLink = "http://seusite.com/reset-password?token=" + token;
+        emailService.sendEmail(user.getEmail(), "Redefinição de Senha",
+                "Clique no link para redefinir sua senha: " + resetLink);
 
         return ResponseEntity.ok("Link de redefinição de senha enviado para o e-mail: " + email);
     }
 
+    @Transactional
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
         String token = request.getToken();
         String newPassword = request.getNewPassword();
 
         // Verificar se o token é válido e não expirou
-        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token).orElseThrow(() -> new RuntimeException("Token inválido ou expirado."));
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token inválido ou expirado."));
 
         if (passwordResetToken.isExpired()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token expirado.");
