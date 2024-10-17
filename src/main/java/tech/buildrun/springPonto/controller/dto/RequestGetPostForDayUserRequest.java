@@ -7,6 +7,16 @@ public class RequestGetPostForDayUserRequest {
     private String id;
     private Integer dia;
     private Integer mes;
+    private Integer ano;
+
+
+    public Integer getAno() {
+        return ano;
+    }
+
+    public void setAno(Integer ano) {
+        this.ano = ano;
+    }
 
     // Getters e Setters
     public String getId() {

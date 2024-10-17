@@ -54,6 +54,7 @@ public class HitPoint {
             String id = request.getId();
             Integer dia = request.getDia();
             Integer mes = request.getMes();
+            Integer ano = request.getAno();
 
             System.out.println("id : " + id);
 
@@ -72,7 +73,7 @@ public class HitPoint {
             }
 
             var filterPoint = user.geHitPoints().stream()
-                    .filter(ponto -> ponto.getDia() == dia && ponto.getMes() == mes)
+                    .filter(ponto -> ponto.getDia() == dia && ponto.getMes() == mes && ponto.getAno() == ano)
                     .collect(Collectors.toList());
 
             return new ResponseEntity<>(
@@ -83,7 +84,7 @@ public class HitPoint {
             return new ResponseEntity<>(
                     new RequestGetPostForDay(List.of(), "Erro ao converter o ID para UUID: " + e.getMessage()),
                     HttpStatus.BAD_REQUEST);
-                    
+
         } catch (RuntimeException e) {
             return new ResponseEntity<>(
                     new RequestGetPostForDay(List.of(), "Falha ao buscar ponto: " + e.getMessage()),

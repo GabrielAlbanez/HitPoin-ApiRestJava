@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.hibernate.annotations.Cascade;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -38,13 +39,12 @@ public class User {
     private String email;
 
     private String password;
-    
+
     @Column(name = "cargo_user")
     private String cargo;
 
     @Column(name = "carga_horaria")
     private String cargaHoraria;
-
 
     // Este Set é semelhante a uma lista, mas não permite dados duplicados.
     // Relação muitos para muitos: um usuário pode ter várias funções (roles) e uma
@@ -54,7 +54,7 @@ public class User {
     // FetchType.EAGER: Quando você define o fetch como EAGER, isso significa que as
     // entidades relacionadas (neste caso, as roles) serão carregadas
     // automaticamente junto com a entidade User
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "tb_users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
@@ -62,7 +62,6 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Column(name = "pontos")
     private List<HitPoint> pontos;
-
 
     public String getCargaHoraria() {
         return cargaHoraria;
@@ -79,7 +78,6 @@ public class User {
     public String getCargo() {
         return cargo;
     }
-    
 
     // Getters e Setters
     public UUID getUserId() {

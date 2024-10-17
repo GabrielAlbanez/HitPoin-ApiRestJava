@@ -47,6 +47,7 @@ public class SecurityConfig {
                         // pq depois que vc implmenta o secury spring ele bloqueia todas as rotas
                         .requestMatchers(HttpMethod.POST, "/CreateUser").permitAll()
                         .requestMatchers(HttpMethod.POST, "/Login").permitAll()
+                        
                         .anyRequest().authenticated())
 
                 // Configura OAuth2 para usar JWT como forma de autenticação
