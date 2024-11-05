@@ -1,5 +1,5 @@
 package tech.buildrun.springPonto.config;
-
+import java.util.List;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -19,6 +19,10 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -28,9 +32,6 @@ import java.security.interfaces.RSAPublicKey;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    // Injeção das chaves RSA públicas e privadas, usadas para criptografar
-    // e descriptografar o token JWT. As chaves são carregadas a partir
-    // dos arquivos definidos nas propriedades da aplicação.
     @Value("${jwt.public.key}")
     private RSAPublicKey publicKey;
 
@@ -39,39 +40,38 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Configurações de segurança para todas as requisições
         http
-                // Exige autenticação para qualquer requisição
                 .authorizeHttpRequests(authorize -> authorize
-                        // esse request Matchers server para deixar essa rota publica
-                        // pq depois que vc implmenta o secury spring ele bloqueia todas as rotas
-                        .requestMatchers(HttpMethod.POST, "/CreateUser").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/Login").permitAll()
-                        
+                        .requestMatchers(HttpMethod.POST, "/usuarios/CreateUser").permitAll() // Ajuste aqui para o endpoint correto
+                        .requestMatchers(HttpMethod.POST, "/Login").permitAll() // Ajuste aqui para o endpoint correto
                         .anyRequest().authenticated())
-
-                // Configura OAuth2 para usar JWT como forma de autenticação
                 .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(Customizer.withDefaults()))
-
-                // Define o gerenciamento de sessão como 'stateless', adequado para APIs REST
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // Caso necessário, desative CSRF para permitir requisições sem verificação
-                // (útil para APIs que não utilizam cookies, como APIs RESTful)
-                .csrf(csrf -> csrf.disable());
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults()); // Adicione esta linha para habilitar CORS
 
         return http.build();
     }
 
     @Bean
-    // Este Bean é responsável por descriptografar o token JWT usando a chave
-    // pública.
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // Permita a origem
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Permita os métodos
+        configuration.setAllowedHeaders(List.of("*")); // Permita todos os cabeçalhos
+        configuration.setAllowCredentials(true); // Permita credenciais
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // Aplique as configurações a todas as rotas
+        return source;
+    }
+
+    @Bean
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withPublicKey(publicKey).build();
     }
 
     @Bean
-    // Este Bean cria o codificador de JWT usando as chaves RSA.
     public JwtEncoder jwtEncoder() {
         JWK jwk = new RSAKey.Builder(this.publicKey).privateKey(this.privateKey).build();
         var jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
@@ -79,9 +79,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    // Bean para criptografar senhas usando BCrypt.
     public BCryptPasswordEncoder bcryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
