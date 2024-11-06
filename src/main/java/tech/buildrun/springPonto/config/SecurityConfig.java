@@ -43,7 +43,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/usuarios/CreateUser").permitAll() // Ajuste aqui para o endpoint correto
-                        .requestMatchers(HttpMethod.POST, "/Login").permitAll() // Ajuste aqui para o endpoint correto
+                        .requestMatchers(HttpMethod.POST, "/auth/Login").permitAll() // Ajuste aqui para o endpoint correto
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(Customizer.withDefaults()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
