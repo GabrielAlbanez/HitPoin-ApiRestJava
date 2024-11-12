@@ -56,7 +56,7 @@ public class TokenController {
         }
 
         var now = Instant.now();
-        var expiressIn = 3000; // Duração do token
+        var expiressIn = 300; // Duração do token
 
         var scopes = user.get().getRoles().stream()
                 .map(Role::getName)
