@@ -1,7 +1,7 @@
 # Java & Next.js Full-Stack Project
 
-![Java Logo](https://upload.wikimedia.org/wikipedia/en/3/30/Java_programming_language_logo.svg)
-![Next.js Logo](https://upload.wikimedia.org/wikipedia/commons/8/8e/Nextjs-logo.svg)
+![Java Logo]([https://upload.wikimedia.org/wikipedia/en/3/30/Java_programming_language_logo.svg](https://th.bing.com/th/id/OIP.n8pa_ux7uUyU9CJrzb1scAHaHa?rs=1&pid=ImgDetMain))
+![Next.js Logo]([https://upload.wikimedia.org/wikipedia/commons/8/8e/Nextjs-logo.svg](https://th.bing.com/th/id/OIP.rwaT41zwdT7cYK_prF8etAHaFj?rs=1&pid=ImgDetMain))
 
 Este projeto utiliza **Java** no backend com Spring Boot e **Next.js** no frontend para criar uma aplicação full-stack robusta. A aplicação é estruturada para fornecer um sistema de autenticação, operações de CRUD e funcionalidades de upload de imagens para perfis de usuário.
 
