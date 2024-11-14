@@ -1,6 +1,7 @@
 package tech.buildrun.springPonto.controller;
 
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.transaction.Transactional;
 import tech.buildrun.springPonto.Entities.HitPoint;
@@ -22,9 +23,15 @@ import tech.buildrun.springPonto.services.HitPointService;
 
 import java.util.Set;
 import java.util.UUID;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,6 +41,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,6 +57,8 @@ public class UserController {
     private final HitPointService hitPointService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
+    @Value("${upload.directory}")
+    private String uploadDirectory;
 
     // tem que fazer esse construtor para passar o repoitory do jpa e iguala o
     // atributo da classe para a gente poder usar os metodos aq
@@ -151,9 +161,6 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-
-
-
     @Transactional
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
@@ -212,14 +219,51 @@ public class UserController {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com o ID: " + id));
 
-            
-
-
         user.getRoles().clear(); // Limpa as roles do usuário
-        
+
         userRepository.deleteById(id);
 
         return ResponseEntity.ok("usuario Deleteado com sucesso");
     }
 
+    @Transactional
+    @PostMapping("/imageUpload")
+    public ResponseEntity<?> uploadUserImage(@RequestParam("file") MultipartFile file, Authentication authentication) {
+        String idUser = authentication.getName();
+        UUID userId = UUID.fromString(idUser);
+    
+        String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        Path projectDir = Paths.get(System.getProperty("user.dir"), "HitPoint", uploadDirectory);
+        Path filePath = projectDir.resolve(filename);
+    
+        try {
+            // Garante que o diretório exista
+            if (!Files.exists(projectDir)) {
+                Files.createDirectories(projectDir);
+            }
+    
+            // Salva o arquivo no diretório especificado
+            file.transferTo(filePath.toFile());
+    
+            // Atualiza o caminho da imagem no banco de dados
+            Optional<User> userOptional = userRepository.findById(userId);
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+                user.setImagePath("uploads/images/" + filename);
+                userRepository.save(user);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado");
+            }
+    
+            // Retorna o caminho da imagem e uma mensagem de sucesso
+            return ResponseEntity.ok(Map.of(
+                "message", "Imagem enviada com sucesso!",
+                "imagePath", "uploads/images/" + filename
+            ));
+    
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar a imagem");
+        }
+    }
 }

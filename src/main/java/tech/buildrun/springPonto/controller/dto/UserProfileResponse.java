@@ -11,14 +11,16 @@ public class UserProfileResponse {
     private List<String> roles;
     private String cargaHoraria;
     private String cargo;
+    private String imagePath;
 
-    public UserProfileResponse(UUID userId, String username, String email, List<String> roles, String cargaHoraria, String cargo) {
+    public UserProfileResponse(UUID userId, String username, String email, List<String> roles, String cargaHoraria, String cargo, String imagePath) {
         this.userId = userId;
         this.username = username;
         this.email = email;
         this.roles = roles;
         this.cargaHoraria = cargaHoraria;
         this.cargo = cargo;
+        this.imagePath = imagePath;
     }
 
     // Getters e Setters
@@ -70,4 +72,9 @@ public class UserProfileResponse {
     public void setCargo(String cargo) {
         this.cargo = cargo;
     }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+    
 }

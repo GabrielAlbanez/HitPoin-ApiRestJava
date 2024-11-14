@@ -40,6 +40,9 @@ public class User {
 
     private String password;
 
+    @Column(name = "image")
+    private String imagePath;
+
     @Column(name = "cargo_user")
     private String cargo;
 
@@ -132,5 +135,12 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 }

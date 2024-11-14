@@ -88,7 +88,8 @@ public class TokenController {
                 user.getEmail(),
                 user.getRoles().stream().map(Role::getName).collect(Collectors.toList()),
                 user.getCargaHoraria(),
-                user.getCargo()
+                user.getCargo(),
+                user.getImagePath()
         );
 
         return ResponseEntity.ok(userProfile);
