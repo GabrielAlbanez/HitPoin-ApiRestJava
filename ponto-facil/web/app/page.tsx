@@ -64,11 +64,27 @@ export default function Home() {
     if (status === "loading") return;
   }, [session, status, router]);
 
+  // Função para verificar a ordem dos pontos
+  const checkPointOrder = (tipoPonto: keyof PontoData): boolean => {
+    if (tipoPonto === "entrada") return true;
+    if (tipoPonto === "pausa" && pontoData.entrada) return true;
+    if (tipoPonto === "retorno" && pontoData.pausa) return true;
+    if (tipoPonto === "saida" && pontoData.retorno) return true;
+    return false;
+  };
+
   // Função para clicar no card de ponto
   const handleCardClick = async (tipoPonto: keyof PontoData) => {
     // Verifica se o usuário é "ADMIN" e abre o modal
     if (session?.user?.roles[0] === "ADMIN") {
       setModalMessage("Usuários com o papel de 'ADMIN' não têm permissão para bater ponto.");
+      onOpen();
+      return;
+    }
+
+    // Verifica a ordem dos pontos
+    if (!checkPointOrder(tipoPonto)) {
+      setModalMessage("Por favor, siga a ordem correta: Entrada -> Pausa -> Retorno -> Saída.");
       onOpen();
       return;
     }

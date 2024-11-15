@@ -12,10 +12,18 @@ function decodeJWT(token) {
 export async function middleware(req: NextRequest) {
   const signInUrl = new URL("/login", req.url);
 
+  console.log("req",req.nextUrl.pathname)
   // Ignora a verificação nas rotas de login, registro e qualquer chamada que envolva o processo de autenticação
-  if (req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/register" || req.nextUrl.pathname.startsWith("/api/auth")) {
+  if (req.nextUrl.pathname === "/login" || req.nextUrl.pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
+
+
+  if (req.nextUrl.pathname === "/api/auth/session") {
+    return NextResponse.redirect(signInUrl);
+  }
+
+
 
   // Obtém o token de sessão do NextAuth
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
@@ -62,6 +70,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|login|register|favicon.ico|public).*)",
+    "/((?!_next|login|favicon.ico|public).*)",
   ], // Protege todas as rotas, exceto login, registro, arquivos estáticos e API de autenticação
 };

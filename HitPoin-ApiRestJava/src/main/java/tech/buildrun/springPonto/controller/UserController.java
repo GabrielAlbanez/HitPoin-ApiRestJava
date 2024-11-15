@@ -235,6 +235,8 @@ public class UserController {
         String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
         Path projectDir = Paths.get(System.getProperty("user.dir"), "HitPoint", uploadDirectory);
         Path filePath = projectDir.resolve(filename);
+
+        System.out.println("filenam >" + filename );
     
         try {
             // Garante que o diretório exista
@@ -247,6 +249,7 @@ public class UserController {
     
             // Atualiza o caminho da imagem no banco de dados
             Optional<User> userOptional = userRepository.findById(userId);
+            System.out.println("id pego >" + userId);
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
                 user.setImagePath("uploads/images/" + filename);
