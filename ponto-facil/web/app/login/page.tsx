@@ -155,6 +155,18 @@ export default function LoginPage() {
           FAQ
         </NextLink>
       </div>
+
+      <div className="w-full text-center">
+        Esqueceu sua senha? Clike {" "}
+        <NextLink
+          className="data-[active=true]:text-primary data-[active=true]:font-large text-primary"
+          href={"/Password/forget"}
+        >
+          aqui
+        </NextLink>
+      </div>
+
+      
     </form>
   );
 }

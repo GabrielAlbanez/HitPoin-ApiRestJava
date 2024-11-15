@@ -11,6 +11,7 @@ function decodeJWT(token) {
 
 export async function middleware(req: NextRequest) {
   const signInUrl = new URL("/login", req.url);
+  const homeUrl = new URL("/", req.url)
 
   console.log("req", req.nextUrl.pathname)
   // Ignora a verificação nas rotas de login, registro e qualquer chamada que envolva o processo de autenticação
@@ -20,7 +21,7 @@ export async function middleware(req: NextRequest) {
 
 
 
-  if (req.nextUrl.pathname === "/api/auth/session") {
+  if (req.nextUrl.pathname === "/register") {
     return NextResponse.redirect(signInUrl);
   }
 
@@ -40,6 +41,12 @@ export async function middleware(req: NextRequest) {
   let decodedToken;
   try {
     decodedToken = decodeJWT(token.accessToken);
+
+
+    // if(decodedToken.roles[0] !== "ADMIN" && req.nextUrl.pathname ==="/register"){
+    //   return NextResponse.redirect(homeUrl);
+    // }
+
   } catch (error) {
     console.error("Erro ao decodificar o token JWT:", error);
     return NextResponse.redirect(signInUrl);
@@ -71,6 +78,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|login|favicon.ico|public).*)",
+    "/((?!_next|login|register|favicon.ico|public).*)",
   ], // Protege todas as rotas, exceto login, registro, arquivos estáticos e API de autenticação
 };
