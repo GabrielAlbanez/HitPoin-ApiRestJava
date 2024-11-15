@@ -12,11 +12,12 @@ function decodeJWT(token) {
 export async function middleware(req: NextRequest) {
   const signInUrl = new URL("/login", req.url);
 
-  console.log("req",req.nextUrl.pathname)
+  console.log("req", req.nextUrl.pathname)
   // Ignora a verificação nas rotas de login, registro e qualquer chamada que envolva o processo de autenticação
-  if (req.nextUrl.pathname === "/login" || req.nextUrl.pathname.startsWith("/api/auth")) {
+  if (req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/Password/Reset" || req.nextUrl.pathname.startsWith("/Password/forget") || req.nextUrl.pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
+
 
 
   if (req.nextUrl.pathname === "/api/auth/session") {

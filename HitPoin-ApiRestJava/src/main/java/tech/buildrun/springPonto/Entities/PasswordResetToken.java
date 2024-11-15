@@ -76,13 +76,9 @@ public class PasswordResetToken {
 
     // Método para verificar se o token está expirado
     public boolean isExpired() {
+        if (expirationDate == null) {
+            throw new IllegalStateException("Data de expiração não está definida para o token.");
+        }
         return LocalDateTime.now().isAfter(expirationDate);
     }
-
-    public PasswordResetToken orElseThrow(Object object) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
-    }
-
-    
 }

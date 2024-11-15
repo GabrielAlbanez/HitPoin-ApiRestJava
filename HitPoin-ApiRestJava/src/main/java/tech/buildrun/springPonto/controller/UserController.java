@@ -165,25 +165,47 @@ public class UserController {
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         String email = request.getEmail();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com o e-mail: " + email));
+    
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com este e-mail"));
+    
+            Optional<User> userExisting = userRepository.findByEmail(email);
+            
+            if(userExisting.isEmpty()){
+                return ResponseEntity.ok("endereço de e-mail invalido");
+            }
 
-        // Gerar um token de redefinição de senha
-        String token = UUID.randomUUID().toString();
-
-        PasswordResetToken passwordResetToken = new PasswordResetToken();
-        passwordResetToken.setUser(user);
-        passwordResetToken.setToken(token);
-
-        // Armazenar o token associado ao usuário (banco de dados ou cache)
-        passwordResetTokenRepository.save(passwordResetToken);
-
-        // Enviar e-mail com o link de redefinição
-        String resetLink = "http://localhost:3000/Password/Reset?token=" + token;
-        emailService.sendEmail(user.getEmail(), "Redefinição de Senha",
-                "Clique no link para redefinir sua senha: " + resetLink);
-
-        return ResponseEntity.ok("Link de redefinição de senha enviado para o e-mail: " + email);
+            // Verifica se já existe um token de redefinição de senha para o usuário
+            Optional<PasswordResetToken> existingToken = passwordResetTokenRepository.findByUser(user);
+    
+            if (existingToken.isPresent()) {
+                // Se já existe um token, retorna uma mensagem informando que o e-mail já foi enviado
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body("Um link de redefinição de senha já foi enviado para este e-mail.");
+            }
+    
+            // Gera um novo token de redefinição de senha
+            String token = UUID.randomUUID().toString();
+    
+            PasswordResetToken passwordResetToken = new PasswordResetToken();
+            passwordResetToken.setUser(user);
+            passwordResetToken.setToken(token);
+    
+            // Armazena o novo token associado ao usuário
+            passwordResetTokenRepository.save(passwordResetToken);
+    
+            // Envia e-mail com o link de redefinição
+            String resetLink = "http://localhost:3000/Password/Reset?token=" + token;
+            emailService.sendEmail(user.getEmail(), "Redefinição de Senha",
+                    "Clique no link para redefinir sua senha: " + resetLink);
+    
+            return ResponseEntity.ok("Link de redefinição de senha enviado para o e-mail: " + email);
+    
+        } catch (UsernameNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Usuário não encontrado com este e-mail");
+        }
     }
 
     @Transactional
@@ -191,24 +213,39 @@ public class UserController {
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
         String token = request.getToken();
         String newPassword = request.getNewPassword();
-
-        // Verificar se o token é válido e não expirou
-        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Token inválido ou expirado."));
-
-        if (passwordResetToken.isExpired()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token expirado.");
+    
+        try {
+            PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token)
+                    .orElseThrow(() -> new RuntimeException("Token inválido ou não encontrado."));
+    
+            // try {
+            //     // Verifica se o token está expirado
+            //     if (passwordResetToken.isExpired()) {
+            //         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            //                 .body("Token expirado. Por favor, solicite um novo link de redefinição de senha.");
+            //     }
+            // } catch (IllegalStateException e) {
+            //     // Caso o expirationDate seja nulo
+            //     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            //             .body("Erro interno: Data de expiração do token não definida.");
+            // }
+    
+            // Atualizar a senha do usuário
+            User user = passwordResetToken.getUser();
+            user.setPassWord(bCryptPasswordEncoder.encode(newPassword));
+            userRepository.save(user);
+    
+            // Remover o token após a redefinição de senha
+            passwordResetTokenRepository.delete(passwordResetToken);
+    
+            return ResponseEntity.ok("Senha redefinida com sucesso.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ocorreu um erro inesperado. Por favor, tente novamente.");
         }
-
-        // Atualizar a senha do usuário
-        User user = passwordResetToken.getUser();
-        user.setPassWord(bCryptPasswordEncoder.encode(newPassword));
-        userRepository.save(user);
-
-        // Remover o token após a redefinição de senha (opcional)
-        passwordResetTokenRepository.delete(passwordResetToken);
-
-        return ResponseEntity.ok("Senha redefinida com sucesso.");
     }
 
     @Transactional
