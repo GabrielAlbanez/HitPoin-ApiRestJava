@@ -81,7 +81,7 @@ const AdminPage = () => {
     } else if (status !== "loading" && session?.user!.roles[0] !== "ADMIN") {
       router.push("/login");
     }
-  }, [session, status, router]);
+  }, [session, status, router,users]);
 
   const handleOpenModal = (user, backdropType = "opaque") => {
     setSelectedUser(user);

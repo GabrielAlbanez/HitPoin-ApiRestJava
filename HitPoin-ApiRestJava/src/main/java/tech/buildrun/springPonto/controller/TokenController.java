@@ -62,6 +62,7 @@ public class TokenController {
                 .map(Role::getName)
                 .collect(Collectors.joining(" "));
 
+        System.out.println("id passado no login :" + user.get().getUserId().toString());
         var claims = JwtClaimsSet.builder()
                 .subject(user.get().getUserId().toString())
                 .issuer("token gerado pelo backEnd")

@@ -23,27 +23,14 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const simulateApiCall = (data: FormData): Promise<void> => {
-  console.log(FormData);
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      data.email === "teste@teste.com"
-        ? resolve()
-        : reject("Email já cadastrado");
-    }, 1000);
-  });
-};
-
 export default function RegisterPage() {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const token = session?.user?.token;
-
-  console.log(token);
 
   const toggleVisibility = () => setIsVisible((prev) => !prev);
 
@@ -61,21 +48,18 @@ export default function RegisterPage() {
     setSuccessMessage(null);
 
     try {
-      console.log("Valores do formulário:", data); // Captura e exibe os dados do formulário
+      console.log("Valores do formulário:", data);
 
-      // Exemplo de token de acesso, substitua pelo seu token real
-      const accessToken = token;
 
-      // Fazendo a requisição usando fetch
       const response = await fetch(
         "http://localhost:8081/usuarios/CreateUser",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(data), // Envia os dados do formulário como JSON
+          body: JSON.stringify(data),
         }
       );
 
@@ -86,13 +70,12 @@ export default function RegisterPage() {
       const responseData = await response.json();
       console.log("Usuário criado com sucesso:", responseData);
 
-      console.log(responseData);
-
       responseData!.response !== "usuario criado com sucesso"
         ? setServerError(responseData!.response)
         : setSuccessMessage(responseData.response);
     } catch (error) {
-      setServerError(error); // Lida com erros e os exibe
+      // Captura a mensagem do erro se for um objeto Error
+      setServerError(error instanceof Error ? error.message : String(error));
     } finally {
       setLoading(false);
     }

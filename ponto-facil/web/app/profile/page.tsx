@@ -106,7 +106,7 @@ const Profile = () => {
     <div className="flex justify-center items-center min-h-full">
       <ToastContainer position="bottom-right" autoClose={5000} hideProgressBar={false} />
 
-      <Card className="w-full max-w-xl md:max-w-lg lg:max-w-2xl shadow-xl border-[1px] border-purple-500 rounded-3xl p-8 bg-slate-900 text-white">
+      <Card className="w-full max-w-xl md:max-w-lg lg:max-w-2xl shadow-xl border-[1px] border-purple-500 rounded-3xl p-8 bg-zinc-900 text-white">
         <CardHeader className="flex flex-col items-center text-center space-y-2">
           <Avatar
             isBordered
@@ -158,7 +158,7 @@ const Profile = () => {
                 <Button onPress={handleOpenFileInput}>Escolher Imagem</Button>
                 {preview && (
                   <div className="mt-4">
-                    <img src={preview} alt="Preview" className="w-32 h-32 rounded-full mx-auto" />
+                    <img src={preview} alt="Preview" className="w-56 h-52 rounded-full mx-auto" />
                   </div>
                 )}
               </ModalBody>

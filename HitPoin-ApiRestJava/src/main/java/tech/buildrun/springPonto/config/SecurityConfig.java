@@ -44,6 +44,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/usuarios/CreateUser").permitAll() // Ajuste aqui para o endpoint correto
                         .requestMatchers(HttpMethod.POST, "/auth/Login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios/forgot-password").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/**").permitAll()  // Ajuste aqui para o endpoint correto
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(Customizer.withDefaults()))

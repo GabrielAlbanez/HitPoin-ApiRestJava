@@ -11,11 +11,21 @@ function decodeJWT(token) {
 
 export async function middleware(req: NextRequest) {
   const signInUrl = new URL("/login", req.url);
+  const homeUrl = new URL("/", req.url)
 
+  console.log("req", req.nextUrl.pathname)
   // Ignora a verificação nas rotas de login, registro e qualquer chamada que envolva o processo de autenticação
-  if (req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/register" || req.nextUrl.pathname.startsWith("/api/auth")) {
+  if (req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/Password/Reset" || req.nextUrl.pathname.startsWith("/Password/forget") || req.nextUrl.pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
+
+
+
+  if (req.nextUrl.pathname === "/register") {
+    return NextResponse.redirect(signInUrl);
+  }
+
+
 
   // Obtém o token de sessão do NextAuth
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
@@ -31,6 +41,12 @@ export async function middleware(req: NextRequest) {
   let decodedToken;
   try {
     decodedToken = decodeJWT(token.accessToken);
+
+
+    // if(decodedToken.roles[0] !== "ADMIN" && req.nextUrl.pathname ==="/register"){
+    //   return NextResponse.redirect(homeUrl);
+    // }
+
   } catch (error) {
     console.error("Erro ao decodificar o token JWT:", error);
     return NextResponse.redirect(signInUrl);
