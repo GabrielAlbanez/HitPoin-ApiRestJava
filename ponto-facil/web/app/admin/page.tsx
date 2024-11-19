@@ -59,7 +59,7 @@ const AdminPage = () => {
   const [error, setError] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false); // State para o modal do componente de registro
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -114,9 +114,44 @@ const AdminPage = () => {
     setIsRegisterModalOpen(false);
   };
 
+  const handleOpenModal = async (user) => {
+    setSelectedUser(user); // Limpa os dados do usuário selecionado antes de carregar os pontos
+    setIsModalOpen(true);
+    try {
+      const token = session.user.token;
+      const response = await axios.get(
+        `http://localhost:8081/usuarios/${user.userId}/pontos`, // Endpoint para buscar pontos do usuário
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const userWithPoints = {
+        ...user, // Adiciona os pontos retornados ao usuário
+      };
+
+      setSelectedUser(userWithPoints); // Define o usuário selecionado com os pontos
+    } catch (error) {
+      console.error("Erro ao carregar os pontos do usuário:", error);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedUser(null); // Limpa os dados do modal ao fechar
+  };
+
   const filteredUsers = users.filter((user) => {
     if (statusFilter !== "all" && user.status !== statusFilter) return false;
-    if (filterValue && !user.userName.toLowerCase().includes(filterValue.toLowerCase())) return false;
+    if (
+      filterValue &&
+      !user.userName.toLowerCase().includes(filterValue.toLowerCase())
+    )
+      return false;
     return true;
   });
 
@@ -204,7 +239,7 @@ const AdminPage = () => {
           size="sm"
           color="primary"
           endContent={<PlusIcon />}
-          onPress={handleOpenRegisterModal} // Abre o modal do componente de registro
+          onPress={handleOpenRegisterModal}
         >
           Add New
         </Button>
@@ -247,14 +282,42 @@ const AdminPage = () => {
       </Table>
 
       {/* Modal para o Componente de Registro */}
-      <Modal className="overflow-y-auto max-h-[90%]" isOpen={isRegisterModalOpen} onClose={handleCloseRegisterModal}>
+      <Modal
+        className="overflow-y-auto max-h-[90%]"
+        isOpen={isRegisterModalOpen}
+        onClose={handleCloseRegisterModal}
+      >
         <ModalContent>
+          <ModalHeader>Register New User</ModalHeader>
           <ModalBody>
             <Register />
           </ModalBody>
           <ModalFooter>
             <Button onPress={handleCloseRegisterModal} color="danger">
               Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Modal para exibir os pontos do usuário */}
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+        <ModalContent>
+          <ModalHeader>Pontos de {selectedUser?.userName}</ModalHeader>
+          <ModalBody className="max-h-[500px] overflow-y-auto">
+            {selectedUser?.pontos && selectedUser.pontos.length > 0 ? (
+              selectedUser.pontos.map((ponto, index) => (
+                <p key={index}>
+                  {ponto.tipoPonto} - {ponto.hora} ({ponto.dia}/{ponto.mes})
+                </p>
+              ))
+            ) : (
+              <p>Nenhum ponto registrado.</p>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button onPress={handleCloseModal} color="danger">
+              Fechar
             </Button>
           </ModalFooter>
         </ModalContent>
