@@ -7,6 +7,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ThemeProviderProps } from "next-themes/dist/types";
 import { SessionProvider } from "next-auth/react";
 import SessionVerifyTokenComponent from "@/components/SessionVerifyTokenComponent";
+import WebSocketManager from "@/components/WebSocketManager";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export function Providers({ children, themeProps }: ProvidersProps) {
 
   return (
     <SessionProvider>
+        <WebSocketManager />
       <NextUIProvider navigate={router.push}>
         <NextThemesProvider {...themeProps}>{children}</NextThemesProvider>
       </NextUIProvider>

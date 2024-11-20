@@ -42,16 +42,18 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/usuarios/CreateUser").permitAll() // Ajuste aqui para o endpoint correto
+                        .requestMatchers(HttpMethod.POST, "/usuarios/CreateUser").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/Login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuarios/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuarios/reset-password").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()  // Ajuste aqui para o endpoint correto
+                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/ws/**").permitAll() // Permitir acesso ao WebSocket
+                        .requestMatchers(HttpMethod.GET,"/usuarios/connected-users").permitAll() // Permitir acesso à rota de usuários conectados
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oAuth2 -> oAuth2.jwt(Customizer.withDefaults()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults()); // Adicione esta linha para habilitar CORS
+                .cors(Customizer.withDefaults());
 
         return http.build();
     }
@@ -59,13 +61,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // Permita a origem
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Permita os métodos
-        configuration.setAllowedHeaders(List.of("*")); // Permita todos os cabeçalhos
-        configuration.setAllowCredentials(true); // Permita credenciais
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Aplique as configurações a todas as rotas
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 

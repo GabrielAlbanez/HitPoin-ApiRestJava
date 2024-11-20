@@ -23,17 +23,12 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@nextui-org/react";
-import {
-  PlusIcon,
-  SearchIcon,
-  ChevronDownIcon,
-  EyeIcon,
-  EditIcon,
-  DeleteIcon,
-} from "@/components/icons";
-import Register from "@/components/Register"; // Importando o componente de registro
+import { PlusIcon, SearchIcon, ChevronDownIcon, EyeIcon, EditIcon, DeleteIcon } from "@/components/icons";
+import Register from "@/components/Register";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
 const statusColorMap = {
   active: "success",
@@ -57,11 +52,11 @@ const AdminPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -73,16 +68,13 @@ const AdminPage = () => {
 
       const token = session.user.token;
       try {
-        const response = await axios.get(
-          "http://localhost:8081/usuarios/allUsers",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          }
-        );
+        const response = await axios.get("http://localhost:8081/usuarios/allUsers", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        });
 
         const usersWithValues = response.data.map((user) => ({
           ...user,
@@ -101,26 +93,52 @@ const AdminPage = () => {
 
     if (status !== "loading" && session?.user) {
       fetchUsers();
-    } else if (status !== "loading" && session?.user!.roles[0] !== "ADMIN") {
+    } else if (status !== "loading" && session?.user?.roles[0] !== "ADMIN") {
       router.push("/login");
     }
   }, [session, status, router]);
 
-  const handleOpenRegisterModal = () => {
-    setIsRegisterModalOpen(true);
-  };
+  useEffect(() => {
+    const socket = new SockJS("http://localhost:8081/ws");
+    const stompClient = new Client({
+      webSocketFactory: () => socket,
+      debug: (str) => console.log(str),
+      onConnect: () => {
+        stompClient.subscribe("/topic/status", (message) => {
+          console.log(JSON.parse(message.body))
+          const updatedUsers = JSON.parse(message.body);
+          setUsers((prevUsers) =>
+            prevUsers.map((user) => ({
+              ...user,
+              status: updatedUsers[user.userName] || user.status,
+            }))
+          );
+        });
+      },
+    });
 
-  const handleCloseRegisterModal = () => {
-    setIsRegisterModalOpen(false);
-  };
+    stompClient.activate();
+    return () => {
+      stompClient.deactivate();
+    };
+  }, []);
+
+  const filteredUsers = users.filter((user) => {
+    if (statusFilter !== "all" && user.status !== statusFilter) return false;
+    if (filterValue && !user.userName.toLowerCase().includes(filterValue.toLowerCase())) return false;
+    return true;
+  });
+
+  const handleOpenRegisterModal = () => setIsRegisterModalOpen(true);
+  const handleCloseRegisterModal = () => setIsRegisterModalOpen(false);
 
   const handleOpenModal = async (user) => {
-    setSelectedUser(user); // Limpa os dados do usuário selecionado antes de carregar os pontos
+    setSelectedUser(user);
     setIsModalOpen(true);
     try {
       const token = session.user.token;
       const response = await axios.get(
-        `http://localhost:8081/usuarios/${user.userId}/pontos`, // Endpoint para buscar pontos do usuário
+        `http://localhost:8081/usuarios/${user.userId}/pontos`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -129,12 +147,7 @@ const AdminPage = () => {
           },
         }
       );
-
-      const userWithPoints = {
-        ...user, // Adiciona os pontos retornados ao usuário
-      };
-
-      setSelectedUser(userWithPoints); // Define o usuário selecionado com os pontos
+      setSelectedUser({ ...user, pontos: response.data });
     } catch (error) {
       console.error("Erro ao carregar os pontos do usuário:", error);
     }
@@ -142,18 +155,8 @@ const AdminPage = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedUser(null); // Limpa os dados do modal ao fechar
+    setSelectedUser(null);
   };
-
-  const filteredUsers = users.filter((user) => {
-    if (statusFilter !== "all" && user.status !== statusFilter) return false;
-    if (
-      filterValue &&
-      !user.userName.toLowerCase().includes(filterValue.toLowerCase())
-    )
-      return false;
-    return true;
-  });
 
   const renderCell = useCallback((user, columnKey) => {
     const cellValue = user[columnKey];
@@ -188,12 +191,7 @@ const AdminPage = () => {
         return (
           <div className="flex gap-2">
             <Tooltip content="Pontos">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="flat"
-                onPress={() => handleOpenModal(user)}
-              >
+              <Button isIconOnly size="sm" variant="flat" onPress={() => handleOpenModal(user)}>
                 <EyeIcon />
               </Button>
             </Tooltip>
@@ -234,16 +232,9 @@ const AdminPage = () => {
           <DropdownItem key="vacation">Vacation</DropdownItem>
         </DropdownMenu>
       </Dropdown>
-      {session?.user?.roles?.[0] === "ADMIN" && (
-        <Button
-          size="sm"
-          color="primary"
-          endContent={<PlusIcon />}
-          onPress={handleOpenRegisterModal}
-        >
-          Add New
-        </Button>
-      )}
+      <Button size="sm" color="primary" endContent={<PlusIcon />} onPress={handleOpenRegisterModal}>
+        Add New
+      </Button>
     </div>
   );
 
@@ -273,20 +264,15 @@ const AdminPage = () => {
         <TableBody items={filteredUsers}>
           {(item) => (
             <TableRow key={item.userId}>
-              {(columnKey) => (
-                <TableCell>{renderCell(item, columnKey)}</TableCell>
-              )}
+              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
             </TableRow>
           )}
         </TableBody>
       </Table>
 
       {/* Modal para o Componente de Registro */}
-      <Modal
-        className="overflow-y-auto max-h-[90%]"
-        isOpen={isRegisterModalOpen}
-        onClose={handleCloseRegisterModal}
-      >
+      <Modal isOpen={isRegisterModalOpen} onClose={handleCloseRegisterModal} className="overflow-y-auto max-h-[90%]"
+        size="lg">
         <ModalContent>
           <ModalHeader>Register New User</ModalHeader>
           <ModalBody>
@@ -304,7 +290,7 @@ const AdminPage = () => {
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         <ModalContent>
           <ModalHeader>Pontos de {selectedUser?.userName}</ModalHeader>
-          <ModalBody className="max-h-[500px] overflow-y-auto">
+          <ModalBody>
             {selectedUser?.pontos && selectedUser.pontos.length > 0 ? (
               selectedUser.pontos.map((ponto, index) => (
                 <p key={index}>

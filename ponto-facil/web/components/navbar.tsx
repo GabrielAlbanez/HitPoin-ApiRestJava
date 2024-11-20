@@ -21,17 +21,61 @@ import { UserIcon } from "@/components/icons";
 import image from "@/images/logo-removebg-preview.png";
 import Image from "next/image";
 import { UserAvatar } from "./UserAvatar";
+import { useRef } from "react";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
 export const Navbar = () => {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const stompClientRef = useRef(null);
+
+  const setupWebSocket = () => {
+    const socket = new SockJS("http://localhost:8081/ws");
+    const stompClient = new Client({
+      webSocketFactory: () => socket,
+      debug: (str) => console.log("WebSocket Debug:", str),
+      onConnect: () => {
+        console.log("Conectado ao WebSocket!");
+      },
+      onDisconnect: () => {
+        console.log("WebSocket desconectado.");
+      },
+      onStompError: (frame) => {
+        console.error("Erro no WebSocket:", frame.headers["message"]);
+      },
+    });
+    stompClientRef.current = stompClient;
+    stompClient.activate();
+  };
 
   const handleLogout = async () => {
+    const username = session?.user?.username || "Desconhecido";
+  
+    if (stompClientRef.current?.connected) {
+      // Publica o status de inativo no WebSocket
+      stompClientRef.current.publish({
+        destination: "/app/status",
+        body: JSON.stringify({ username, status: "inactive" }),
+      });
+  
+      console.log(`Status de inatividade enviado para o usuário: ${username}`);
+  
+      // Aguarda um pequeno delay para garantir que a mensagem foi enviada
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  
+    // Realiza o logout após garantir que a mensagem foi enviada
     await signOut({ redirect: true, callbackUrl: "/login" });
   };
 
   if (status === "loading") {
     return null;
+  }
+
+  // Inicializa o WebSocket apenas quando o usuário está logado
+  if (status === "authenticated" && !stompClientRef.current) {
+    setupWebSocket();
   }
 
   return (
@@ -129,15 +173,6 @@ export const Navbar = () => {
           ) : (
             <>
               <UserAvatar user={session.user} onClick={handleLogout} />
-              {/* <Button
-                className="text-sm font-normal text-default-600 bg-default-100"
-                color="danger"
-                startContent={<UserIcon className="text-danger" />}
-                variant="flat"
-                onClick={handleLogout}
-              >
-                Logout
-              </Button> */}
             </>
           )}
         </NavbarItem>
