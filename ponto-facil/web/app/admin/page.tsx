@@ -23,7 +23,14 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@nextui-org/react";
-import { PlusIcon, SearchIcon, ChevronDownIcon, EyeIcon, EditIcon, DeleteIcon } from "@/components/icons";
+import {
+  PlusIcon,
+  SearchIcon,
+  ChevronDownIcon,
+  EyeIcon,
+  EditIcon,
+  DeleteIcon,
+} from "@/components/icons";
 import Register from "@/components/Register";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -68,13 +75,16 @@ const AdminPage = () => {
 
       const token = session.user.token;
       try {
-        const response = await axios.get("http://localhost:8081/usuarios/allUsers", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        });
+        const response = await axios.get(
+          "http://localhost:8081/usuarios/allUsers",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          }
+        );
 
         const usersWithValues = response.data.map((user) => ({
           ...user,
@@ -129,14 +139,18 @@ const AdminPage = () => {
 
   const filteredUsers = users.filter((user) => {
     if (statusFilter !== "all" && user.status !== statusFilter) return false;
-    if (filterValue && !user.userName.toLowerCase().includes(filterValue.toLowerCase())) return false;
+    if (
+      filterValue &&
+      !user.userName.toLowerCase().includes(filterValue.toLowerCase())
+    )
+      return false;
     return true;
   });
 
   const handleOpenRegisterModal = () => setIsRegisterModalOpen(true);
   const handleCloseRegisterModal = () => setIsRegisterModalOpen(false);
   const handleOpenModalDelete = (user) => {
-    console.log("user", user)
+    console.log("user", user);
     setSelectedUser(user);
     setIsOpenModalDelete(true);
   };
@@ -201,7 +215,12 @@ const AdminPage = () => {
         return (
           <div className="flex gap-2">
             <Tooltip content="Pontos">
-              <Button isIconOnly size="sm" variant="flat" onPress={() => handleOpenModal(user)}>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="flat"
+                onPress={() => handleOpenModal(user)}
+              >
                 <EyeIcon />
               </Button>
             </Tooltip>
@@ -211,7 +230,13 @@ const AdminPage = () => {
               </Button>
             </Tooltip>
             <Tooltip content="Excluir">
-              <Button isIconOnly size="sm" variant="light" onPress={() => handleOpenModalDelete(user)} color="danger">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+                onPress={() => handleOpenModalDelete(user)}
+                color="danger"
+              >
                 <DeleteIcon />
               </Button>
             </Tooltip>
@@ -236,18 +261,32 @@ const AdminPage = () => {
           <Button endContent={<ChevronDownIcon />}>Filter by Status</Button>
         </DropdownTrigger>
         <DropdownMenu>
-          <DropdownItem onClick={() => handleStatusFilterChange("all")} key="All">
+          <DropdownItem
+            onClick={() => handleStatusFilterChange("all")}
+            key="All"
+          >
             All
           </DropdownItem>
-          <DropdownItem onClick={() => handleStatusFilterChange("active")} key="Active">
+          <DropdownItem
+            onClick={() => handleStatusFilterChange("active")}
+            key="Active"
+          >
             Active
           </DropdownItem>
-          <DropdownItem onClick={() => handleStatusFilterChange("inactive")} key="Inactive">
+          <DropdownItem
+            onClick={() => handleStatusFilterChange("inactive")}
+            key="Inactive"
+          >
             Inactive
           </DropdownItem>
         </DropdownMenu>
       </Dropdown>
-      <Button size="sm" color="primary" endContent={<PlusIcon />} onPress={handleOpenRegisterModal}>
+      <Button
+        size="sm"
+        color="primary"
+        endContent={<PlusIcon />}
+        onPress={handleOpenRegisterModal}
+      >
         Add New
       </Button>
     </div>
@@ -279,14 +318,21 @@ const AdminPage = () => {
         <TableBody items={filteredUsers}>
           {(item) => (
             <TableRow key={item.userId}>
-              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              {(columnKey) => (
+                <TableCell>{renderCell(item, columnKey)}</TableCell>
+              )}
             </TableRow>
           )}
         </TableBody>
       </Table>
 
       {/* Modals */}
-      <Modal isOpen={isRegisterModalOpen} onClose={handleCloseRegisterModal} className="overflow-y-auto max-h-[90%]" size="lg">
+      <Modal
+        isOpen={isRegisterModalOpen}
+        onClose={handleCloseRegisterModal}
+        className="overflow-y-auto max-h-[90%]"
+        size="lg"
+      >
         <ModalContent>
           <ModalHeader>Register New User</ModalHeader>
           <ModalBody>
@@ -302,16 +348,48 @@ const AdminPage = () => {
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         <ModalContent>
-          <ModalHeader>Pontos de {selectedUser?.userName}</ModalHeader>
+          <ModalHeader>
+            <div className="flex items-center gap-3">
+              <User
+                avatarProps={{
+                  src: selectedUser?.imagePath
+                    ? `http://localhost:8081/api/${selectedUser.imagePath}`
+                    : "https://via.placeholder.com/150",
+                  size: "lg",
+                }}
+                name={selectedUser?.userName}
+                description={selectedUser?.email}
+              />
+            </div>
+          </ModalHeader>
           <ModalBody>
             {selectedUser?.pontos && selectedUser.pontos.length > 0 ? (
-              selectedUser.pontos.map((ponto, index) => (
-                <p key={index}>
-                  {ponto.tipoPonto} - {ponto.hora} ({ponto.dia}/{ponto.mes})
-                </p>
-              ))
+              <Table
+                aria-label="Tabela de Pontos do Usuário"
+                css={{
+                  height: "auto",
+                  minWidth: "100%",
+                }}
+              >
+                <TableHeader>
+                  <TableColumn>Data</TableColumn>
+                  <TableColumn>Tipo</TableColumn>
+                  <TableColumn>Pontos</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {selectedUser.pontos.map((ponto, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{`${ponto.dia}/${ponto.mes}`}</TableCell>
+                      <TableCell>{ponto.tipoPonto}</TableCell>
+                      <TableCell>{ponto.hora}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             ) : (
-              <p>Nenhum ponto registrado.</p>
+              <p className="text-center text-gray-500">
+                Nenhum ponto registrado para este usuário.
+              </p>
             )}
           </ModalBody>
           <ModalFooter>
@@ -321,24 +399,34 @@ const AdminPage = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
       <Modal isOpen={isOpenModalDelete} onClose={handleCloseModalDelete}>
         <ModalContent>
-          <ModalHeader className="flex justify-center items-center">Confirmação de Exclusão</ModalHeader>
+          <ModalHeader className="flex justify-center items-center">
+            Confirmação de Exclusão
+          </ModalHeader>
           <ModalBody>
             {selectedUser && (
               <div className="flex flex-col items-center justify-center gap-4">
                 <img
-                  src={`http://localhost:8081/api/${selectedUser.imagePath}` || "https://via.placeholder.com/150"}
+                  src={
+                    `http://localhost:8081/api/${selectedUser.imagePath}` ||
+                    "https://via.placeholder.com/150"
+                  }
                   alt={selectedUser.userName}
                   className="rounded-full w-24 h-24"
                 />
-                <p className="text-lg font-semibold">Deseja excluir o usuário {selectedUser.userName}?</p>
+                <p className="text-lg font-semibold">
+                  Deseja excluir o usuário {selectedUser.userName}?
+                </p>
               </div>
             )}
           </ModalBody>
           <ModalFooter>
-            <Button onPress={handleCloseModalDelete} color="primary" variant="flat">
+            <Button
+              onPress={handleCloseModalDelete}
+              color="primary"
+              variant="flat"
+            >
               Cancelar
             </Button>
             <Button
