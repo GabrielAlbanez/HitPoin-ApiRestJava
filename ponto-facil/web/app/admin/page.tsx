@@ -32,8 +32,7 @@ import SockJS from "sockjs-client";
 
 const statusColorMap = {
   active: "success",
-  paused: "danger",
-  vacation: "warning",
+  inactive: "danger",
 };
 
 const columns = [
@@ -57,6 +56,7 @@ const AdminPage = () => {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [isOpenModalDelete, setIsOpenModalDelete] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -105,7 +105,7 @@ const AdminPage = () => {
       debug: (str) => console.log(str),
       onConnect: () => {
         stompClient.subscribe("/topic/status", (message) => {
-          console.log(JSON.parse(message.body))
+          console.log(JSON.parse(message.body));
           const updatedUsers = JSON.parse(message.body);
           setUsers((prevUsers) =>
             prevUsers.map((user) => ({
@@ -123,6 +123,10 @@ const AdminPage = () => {
     };
   }, []);
 
+  const handleStatusFilterChange = (key) => {
+    setStatusFilter(key);
+  };
+
   const filteredUsers = users.filter((user) => {
     if (statusFilter !== "all" && user.status !== statusFilter) return false;
     if (filterValue && !user.userName.toLowerCase().includes(filterValue.toLowerCase())) return false;
@@ -131,6 +135,12 @@ const AdminPage = () => {
 
   const handleOpenRegisterModal = () => setIsRegisterModalOpen(true);
   const handleCloseRegisterModal = () => setIsRegisterModalOpen(false);
+  const handleOpenModalDelete = (user) => {
+    console.log("user", user)
+    setSelectedUser(user);
+    setIsOpenModalDelete(true);
+  };
+  const handleCloseModalDelete = () => setIsOpenModalDelete(false);
 
   const handleOpenModal = async (user) => {
     setSelectedUser(user);
@@ -201,7 +211,7 @@ const AdminPage = () => {
               </Button>
             </Tooltip>
             <Tooltip content="Excluir">
-              <Button isIconOnly size="sm" variant="light" color="danger">
+              <Button isIconOnly size="sm" variant="light" onPress={() => handleOpenModalDelete(user)} color="danger">
                 <DeleteIcon />
               </Button>
             </Tooltip>
@@ -225,11 +235,16 @@ const AdminPage = () => {
         <DropdownTrigger>
           <Button endContent={<ChevronDownIcon />}>Filter by Status</Button>
         </DropdownTrigger>
-        <DropdownMenu onSelectionChange={(key) => setStatusFilter(key)}>
-          <DropdownItem key="all">All</DropdownItem>
-          <DropdownItem key="active">Active</DropdownItem>
-          <DropdownItem key="paused">Paused</DropdownItem>
-          <DropdownItem key="vacation">Vacation</DropdownItem>
+        <DropdownMenu>
+          <DropdownItem onClick={() => handleStatusFilterChange("all")} key="All">
+            All
+          </DropdownItem>
+          <DropdownItem onClick={() => handleStatusFilterChange("active")} key="Active">
+            Active
+          </DropdownItem>
+          <DropdownItem onClick={() => handleStatusFilterChange("inactive")} key="Inactive">
+            Inactive
+          </DropdownItem>
         </DropdownMenu>
       </Dropdown>
       <Button size="sm" color="primary" endContent={<PlusIcon />} onPress={handleOpenRegisterModal}>
@@ -270,9 +285,8 @@ const AdminPage = () => {
         </TableBody>
       </Table>
 
-      {/* Modal para o Componente de Registro */}
-      <Modal isOpen={isRegisterModalOpen} onClose={handleCloseRegisterModal} className="overflow-y-auto max-h-[90%]"
-        size="lg">
+      {/* Modals */}
+      <Modal isOpen={isRegisterModalOpen} onClose={handleCloseRegisterModal} className="overflow-y-auto max-h-[90%]" size="lg">
         <ModalContent>
           <ModalHeader>Register New User</ModalHeader>
           <ModalBody>
@@ -286,7 +300,6 @@ const AdminPage = () => {
         </ModalContent>
       </Modal>
 
-      {/* Modal para exibir os pontos do usuário */}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         <ModalContent>
           <ModalHeader>Pontos de {selectedUser?.userName}</ModalHeader>
@@ -304,6 +317,38 @@ const AdminPage = () => {
           <ModalFooter>
             <Button onPress={handleCloseModal} color="danger">
               Fechar
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={isOpenModalDelete} onClose={handleCloseModalDelete}>
+        <ModalContent>
+          <ModalHeader className="flex justify-center items-center">Confirmação de Exclusão</ModalHeader>
+          <ModalBody>
+            {selectedUser && (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <img
+                  src={`http://localhost:8081/api/${selectedUser.imagePath}` || "https://via.placeholder.com/150"}
+                  alt={selectedUser.userName}
+                  className="rounded-full w-24 h-24"
+                />
+                <p className="text-lg font-semibold">Deseja excluir o usuário {selectedUser.userName}?</p>
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button onPress={handleCloseModalDelete} color="primary" variant="flat">
+              Cancelar
+            </Button>
+            <Button
+              onPress={() => {
+                console.log(`Usuário ${selectedUser.userName} será excluído.`);
+                setIsOpenModalDelete(false);
+              }}
+              color="danger"
+            >
+              Confirmar
             </Button>
           </ModalFooter>
         </ModalContent>

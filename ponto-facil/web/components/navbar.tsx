@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Navbar as NextUINavbar,
   NavbarContent,
@@ -21,7 +22,7 @@ import { UserIcon } from "@/components/icons";
 import image from "@/images/logo-removebg-preview.png";
 import Image from "next/image";
 import { UserAvatar } from "./UserAvatar";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
@@ -30,52 +31,67 @@ export const Navbar = () => {
   const { data: session, status } = useSession();
   const stompClientRef = useRef(null);
 
-  const setupWebSocket = () => {
-    const socket = new SockJS("http://localhost:8081/ws");
-    const stompClient = new Client({
-      webSocketFactory: () => socket,
-      debug: (str) => console.log("WebSocket Debug:", str),
-      onConnect: () => {
-        console.log("Conectado ao WebSocket!");
-      },
-      onDisconnect: () => {
+  useEffect(() => {
+    const setupWebSocket = () => {
+      const socket = new SockJS("http://localhost:8081/ws");
+      const stompClient = new Client({
+        webSocketFactory: () => socket,
+        debug: (str) => console.log("WebSocket Debug:", str),
+        onConnect: () => {
+          console.log("Conectado ao WebSocket!");
+        },
+        onStompError: (frame) => {
+          console.error("Erro no WebSocket:", frame.headers["message"]);
+        },
+      });
+
+      stompClient.activate();
+      stompClientRef.current = stompClient;
+
+      return () => {
+        stompClient.deactivate();
         console.log("WebSocket desconectado.");
-      },
-      onStompError: (frame) => {
-        console.error("Erro no WebSocket:", frame.headers["message"]);
-      },
-    });
-    stompClientRef.current = stompClient;
-    stompClient.activate();
-  };
+      };
+    };
+
+    setupWebSocket();
+
+    const handleTabClose = () => {
+      if (stompClientRef.current?.connected) {
+        const username = session?.user?.username || "Desconhecido";
+        stompClientRef.current.publish({
+          destination: "/app/status",
+          body: JSON.stringify({ username, status: "inactive" }),
+        });
+        console.log(`Status "inactive" enviado para o usuário: ${username}`);
+      }
+    };
+
+    // Adiciona eventos para fechar aba
+    window.addEventListener("beforeunload", handleTabClose);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleTabClose);
+    };
+  }, [session]);
 
   const handleLogout = async () => {
     const username = session?.user?.username || "Desconhecido";
-  
+
     if (stompClientRef.current?.connected) {
-      // Publica o status de inativo no WebSocket
       stompClientRef.current.publish({
         destination: "/app/status",
         body: JSON.stringify({ username, status: "inactive" }),
       });
-  
       console.log(`Status de inatividade enviado para o usuário: ${username}`);
-  
-      // Aguarda um pequeno delay para garantir que a mensagem foi enviada
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-  
-    // Realiza o logout após garantir que a mensagem foi enviada
+
     await signOut({ redirect: true, callbackUrl: "/login" });
   };
 
   if (status === "loading") {
     return null;
-  }
-
-  // Inicializa o WebSocket apenas quando o usuário está logado
-  if (status === "authenticated" && !stompClientRef.current) {
-    setupWebSocket();
   }
 
   return (
@@ -171,9 +187,7 @@ export const Navbar = () => {
               Entrar
             </Button>
           ) : (
-            <>
-              <UserAvatar user={session.user} onClick={handleLogout} />
-            </>
+            <UserAvatar user={session.user} onClick={handleLogout} />
           )}
         </NavbarItem>
       </NavbarContent>
@@ -182,50 +196,6 @@ export const Navbar = () => {
         <ThemeSwitch />
         <NavbarMenuToggle />
       </NavbarContent>
-
-      <NavbarMenu>
-        <div className="mx-4 mt-2 flex flex-col gap-2">
-          {!session ? (
-            <NavbarMenuItem>
-              <Link href="/login" color="primary" size="lg">
-                Entrar
-              </Link>
-            </NavbarMenuItem>
-          ) : (
-            (session?.user?.roles[0] == "ADMIN"
-              ? siteConfig.navMenuItemsAdm
-              : siteConfig.navMenuItems
-            ).map((item, index) => (
-              <NavbarMenuItem key={`${item}-${index}`}>
-                {item.label === "Logout" ? (
-                  <Button
-                    color="danger"
-                    onClick={handleLogout}
-                    className="text-sm font-normal"
-                    variant="flat"
-                  >
-                    Logout
-                  </Button>
-                ) : (
-                  <Link
-                    color={
-                      item.href === pathname
-                        ? "primary"
-                        : item.href === "/logout"
-                          ? "danger"
-                          : "foreground"
-                    }
-                    href={item.href}
-                    size="lg"
-                  >
-                    {item.label}
-                  </Link>
-                )}
-              </NavbarMenuItem>
-            ))
-          )}
-        </div>
-      </NavbarMenu>
     </NextUINavbar>
   );
 };
