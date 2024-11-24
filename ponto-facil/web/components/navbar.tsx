@@ -67,7 +67,7 @@ export const Navbar = () => {
       }
     };
 
-    // Adiciona eventos para fechar aba
+    // Adiciona eventos para fechar a aba
     window.addEventListener("beforeunload", handleTabClose);
 
     return () => {
@@ -96,6 +96,7 @@ export const Navbar = () => {
 
   return (
     <NextUINavbar maxWidth="2xl" position="sticky">
+      {/* Navbar Start Content */}
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex justify-start items-center gap-1" href="/">
@@ -169,6 +170,7 @@ export const Navbar = () => {
         </ul>
       </NavbarContent>
 
+      {/* Navbar End Content */}
       <NavbarContent
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
@@ -192,10 +194,56 @@ export const Navbar = () => {
         </NavbarItem>
       </NavbarContent>
 
+      {/* Mobile Menu Toggle */}
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
         <ThemeSwitch />
         <NavbarMenuToggle />
       </NavbarContent>
+
+      {/* Navbar Menu for Mobile */}
+      <NavbarMenu>
+        <div className="mx-4 mt-2 flex flex-col gap-2">
+          {!session ? (
+            <NavbarMenuItem>
+              <Link href="/login" color="primary" size="lg">
+                Entrar
+              </Link>
+            </NavbarMenuItem>
+          ) : (
+            (session?.user?.roles[0] == "ADMIN"
+              ? siteConfig.navMenuItemsAdm
+              : siteConfig.navMenuItems
+            ).map((item, index) => (
+              <NavbarMenuItem key={`${item}-${index}`}>
+                {item.label === "Logout" ? (
+                  <Button
+                    color="danger"
+                    onClick={handleLogout}
+                    className="text-sm font-normal"
+                    variant="flat"
+                  >
+                    Logout
+                  </Button>
+                ) : (
+                  <Link
+                    color={
+                      item.href === pathname
+                        ? "primary"
+                        : item.href === "/logout"
+                        ? "danger"
+                        : "foreground"
+                    }
+                    href={item.href}
+                    size="lg"
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </NavbarMenuItem>
+            ))
+          )}
+        </div>
+      </NavbarMenu>
     </NextUINavbar>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useTransition } from "react";
 import {
   Table,
   TableHeader,
@@ -36,10 +36,23 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import { toast } from "react-toastify";
 
 const statusColorMap = {
   active: "success",
   inactive: "danger",
+};
+
+const defaultAvatarFemale =
+  "https://cdnb.artstation.com/p/assets/images/images/042/809/195/large/mace-tan-mace-kayle-fanart-finaledit.jpg?1635490851";
+const defaultAvatarMale =
+  "https://pbs.twimg.com/media/Dtv9ICMWsAE-tz9.jpg";
+
+const determineDefaultAvatar = (username) => {
+  const isFemale = ["a", "e", "i", "y"].includes(
+    username[username.length - 1].toLowerCase()
+  );
+  return isFemale ? defaultAvatarFemale : defaultAvatarMale;
 };
 
 const columns = [
@@ -64,43 +77,44 @@ const AdminPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isOpenModalDelete, setIsOpenModalDelete] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const fetchUsers = async () => {
+    if (!session?.user) {
+      setLoading(false);
+      setError("Você não está logado.");
+      return;
+    }
+
+    const token = session.user.token;
+    try {
+      const response = await axios.get(
+        "http://localhost:8081/usuarios/allUsers",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const usersWithValues = response.data.map((user) => ({
+        ...user,
+        role: user.cargo || "undefined",
+        status: user.status || "active",
+        cargaHoraria: user.cargaHoraria || "undefined",
+      }));
+
+      setUsers(usersWithValues);
+    } catch (error) {
+      setError("Erro ao carregar os dados. Tente novamente mais tarde.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      if (!session?.user) {
-        setLoading(false);
-        setError("Você não está logado.");
-        return;
-      }
-
-      const token = session.user.token;
-      try {
-        const response = await axios.get(
-          "http://localhost:8081/usuarios/allUsers",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          }
-        );
-
-        const usersWithValues = response.data.map((user) => ({
-          ...user,
-          role: user.cargo || "undefined",
-          status: user.status || "active",
-          cargaHoraria: user.cargaHoraria || "undefined",
-        }));
-
-        setUsers(usersWithValues);
-      } catch (error) {
-        setError("Erro ao carregar os dados. Tente novamente mais tarde.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (status !== "loading" && session?.user) {
       fetchUsers();
     } else if (status !== "loading" && session?.user?.roles[0] !== "ADMIN") {
@@ -115,7 +129,6 @@ const AdminPage = () => {
       debug: (str) => console.log(str),
       onConnect: () => {
         stompClient.subscribe("/topic/status", (message) => {
-          console.log(JSON.parse(message.body));
           const updatedUsers = JSON.parse(message.body);
           setUsers((prevUsers) =>
             prevUsers.map((user) => ({
@@ -150,17 +163,55 @@ const AdminPage = () => {
   const handleOpenRegisterModal = () => setIsRegisterModalOpen(true);
   const handleCloseRegisterModal = () => setIsRegisterModalOpen(false);
   const handleOpenModalDelete = (user) => {
-    console.log("user", user);
     setSelectedUser(user);
     setIsOpenModalDelete(true);
   };
-  const handleCloseModalDelete = () => setIsOpenModalDelete(false);
+
+  const handleCloseModalDelete = () => {
+    setIsOpenModalDelete(false);
+    setSelectedUser(null);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    const token = session?.user.token;
+
+    startTransition(() => {
+      toast.promise(
+        axios.delete(
+          `http://localhost:8081/usuarios/deleteUser/${selectedUser.userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          }
+        ),
+        {
+          pending: "Excluindo usuário...",
+          success: "Usuário excluído com sucesso!",
+          error: "Erro ao excluir usuário.",
+        }
+      )
+        .then(() => {
+          setUsers((prev) =>
+            prev.filter((user) => user.userId !== selectedUser.userId)
+          );
+          handleCloseModalDelete();
+        })
+        .catch((error) => {
+          console.error("Erro ao excluir usuário:", error);
+        });
+    });
+  };
 
   const handleOpenModal = async (user) => {
     setSelectedUser(user);
     setIsModalOpen(true);
     try {
-      const token = session.user.token;
+      const token = session?.user.token;
       const response = await axios.get(
         `http://localhost:8081/usuarios/${user.userId}/pontos`,
         {
@@ -186,13 +237,14 @@ const AdminPage = () => {
     const cellValue = user[columnKey];
     switch (columnKey) {
       case "name":
+        const avatarSrc = user?.imagePath
+          ? `http://localhost:8081/api/${user.imagePath}`
+          : determineDefaultAvatar(user.userName);
         return (
           <User
             avatarProps={{
               radius: "lg",
-              src: user?.imagePath
-                ? `http://localhost:8081/api/${user.imagePath}`
-                : "https://via.placeholder.com/150",
+              src: avatarSrc,
             }}
             name={user.userName}
             description={user.email}
@@ -327,22 +379,17 @@ const AdminPage = () => {
       </Table>
 
       {/* Modals */}
-      <Modal
-        isOpen={isRegisterModalOpen}
-        onClose={handleCloseRegisterModal}
-        className="overflow-y-auto max-h-[90%]"
-        size="lg"
-      >
+      <Modal isOpen={isRegisterModalOpen} onClose={handleCloseRegisterModal}>
         <ModalContent>
-          <ModalHeader>Register New User</ModalHeader>
+          <ModalHeader>Registrar Novo Usuário</ModalHeader>
           <ModalBody>
-            <Register />
+            <Register
+              onRegisterComplete={() => {
+                fetchUsers();
+                setIsRegisterModalOpen(false);
+              }}
+            />
           </ModalBody>
-          <ModalFooter>
-            <Button onPress={handleCloseRegisterModal} color="danger">
-              Close
-            </Button>
-          </ModalFooter>
         </ModalContent>
       </Modal>
 
@@ -354,7 +401,7 @@ const AdminPage = () => {
                 avatarProps={{
                   src: selectedUser?.imagePath
                     ? `http://localhost:8081/api/${selectedUser.imagePath}`
-                    : "https://via.placeholder.com/150",
+                    : determineDefaultAvatar(selectedUser?.userName || "User"),
                   size: "lg",
                 }}
                 name={selectedUser?.userName}
@@ -409,8 +456,9 @@ const AdminPage = () => {
               <div className="flex flex-col items-center justify-center gap-4">
                 <img
                   src={
-                    `http://localhost:8081/api/${selectedUser.imagePath}` ||
-                    "https://via.placeholder.com/150"
+                    selectedUser.imagePath
+                      ? `http://localhost:8081/api/${selectedUser.imagePath}`
+                      : determineDefaultAvatar(selectedUser.userName)
                   }
                   alt={selectedUser.userName}
                   className="rounded-full w-24 h-24"
@@ -430,13 +478,11 @@ const AdminPage = () => {
               Cancelar
             </Button>
             <Button
-              onPress={() => {
-                console.log(`Usuário ${selectedUser.userName} será excluído.`);
-                setIsOpenModalDelete(false);
-              }}
+              onPress={handleDeleteUser}
               color="danger"
+              isDisabled={isPending}
             >
-              Confirmar
+              {isPending ? "Excluindo..." : "Confirmar"}
             </Button>
           </ModalFooter>
         </ModalContent>

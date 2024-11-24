@@ -2,9 +2,18 @@
 
 import { useSession } from "next-auth/react";
 import {
-  Card, CardHeader, CardBody, Avatar, Divider,
-  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  Button, useDisclosure
+  Card,
+  CardHeader,
+  CardBody,
+  Avatar,
+  Divider,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  useDisclosure,
 } from "@nextui-org/react";
 import { useState, ChangeEvent, useRef, useTransition } from "react";
 import { toast, ToastContainer } from "react-toastify";
@@ -22,9 +31,20 @@ interface UserProfile {
 
 const Profile = () => {
   const { data: session, update } = useSession() as { data: { user: UserProfile } | null };
-  const [image, setImage] = useState<string>(
-    session?.user.imagePath || "https://th.bing.com/th/id/OIP.dC6CwT2I2vj7goUpkPFvVgHaEK?rs=1&pid=ImgDetMain"
-  );
+
+  const determineDefaultAvatar = (username: string): string => {
+    const isFemale =
+      ["a", "e", "i", "y"].includes(username[username.length - 1].toLowerCase());
+
+    return isFemale
+      ? "https://cdnb.artstation.com/p/assets/images/images/042/809/195/large/mace-tan-mace-kayle-fanart-finaledit.jpg?1635490851"
+      : "https://pbs.twimg.com/media/Dtv9ICMWsAE-tz9.jpg";
+  };
+
+  const defaultAvatar = session?.user.username
+    ? determineDefaultAvatar(session.user.username)
+    : "https://via.placeholder.com/150";
+
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -33,48 +53,52 @@ const Profile = () => {
 
   if (!session) return <div>Carregando...</div>;
 
+  const userImage =
+    session?.user.imagePath && !preview
+      ? `http://localhost:8081/api/${session.user.imagePath}`
+      : preview || defaultAvatar;
+
   const handleImageSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedImage(file);
-      setPreview(URL.createObjectURL(file)); // Cria uma URL de visualização para a imagem selecionada
+      setPreview(URL.createObjectURL(file));
     }
   };
 
   const handleConfirmUpload = () => {
     if (!selectedImage) {
-      // Exibe o toast de erro caso nenhuma imagem tenha sido selecionada
       toast.error("Nenhuma imagem selecionada", { theme: "colored" });
       return;
     }
 
     startTransition(async () => {
-      // Utilizando o `toast.promise` para gerenciar estados de carregamento, sucesso e erro
       await toast.promise(
         new Promise(async (resolve, reject) => {
           const formData = new FormData();
           formData.append("file", selectedImage);
 
           try {
-            // Simulando um atraso para visualização do estado de carregamento
-            await new Promise(res => setTimeout(res));
-            
             const response = await fetch("/api/upload", {
               method: "POST",
               body: formData,
             });
 
             if (response.ok) {
-              const data = await response.json() as { message: string; imagePath: string };
-              setImage(`http://localhost:8081/api/${data.imagePath}`);
+              const data = (await response.json()) as { message: string; imagePath: string };
+
+              // Atualiza a sessão com o novo caminho da imagem
+              await update({
+                user: {
+                  ...session.user,
+                  imagePath: data.imagePath,
+                },
+              });
+
               setSelectedImage(null);
               setPreview(null);
-              onOpenChange(false); // Fecha o modal
-
-              // Chama `update()` sem argumento para forçar a atualização da sessão
-              await update();
-
-              resolve("Imagem enviada com sucesso!"); // Sucesso
+              onOpenChange(false);
+              resolve("Imagem enviada com sucesso!");
             } else {
               reject("Erro ao enviar a imagem");
             }
@@ -112,10 +136,10 @@ const Profile = () => {
             isBordered
             color="secondary"
             size="xl"
-            src={session?.user?.imagePath ? `http://localhost:8081/api/${session.user.imagePath}` : image}
+            src={userImage}
             alt="User Avatar"
             className="w-32 h-32 sm:w-36 sm:h-36 mb-4 rounded-full border-4 border-white"
-            onClick={onOpen} // Abre o modal ao clicar na imagem
+            onClick={onOpen}
           />
           <h1 className="font-bold text-2xl sm:text-3xl mb-1">
             {session.user.username || "Usuário"}
