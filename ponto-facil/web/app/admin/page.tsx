@@ -1,6 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState, useCallback, useTransition } from "react";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Table,
   TableHeader,
@@ -36,7 +37,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 const statusColorMap = {
   active: "success",
@@ -163,6 +164,7 @@ const AdminPage = () => {
   const handleOpenRegisterModal = () => setIsRegisterModalOpen(true);
   const handleCloseRegisterModal = () => setIsRegisterModalOpen(false);
   const handleOpenModalDelete = (user) => {
+    console.log("selectUser", user)
     setSelectedUser(user);
     setIsOpenModalDelete(true);
   };
@@ -174,6 +176,14 @@ const AdminPage = () => {
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
+
+
+    if(selectedUser?.userName == "ADMIN"){
+      toast.error("Este usuário não pode ser excluído.", {
+        theme: "colored",
+      });
+      return;
+    }
 
     const token = session?.user.token;
 
@@ -349,6 +359,7 @@ const AdminPage = () => {
 
   return (
     <div className="overflow-x-auto w-full">
+        <ToastContainer position="bottom-right" autoClose={5000} />
       {topContent}
       <Table
         aria-label="Tabela de usuários"
