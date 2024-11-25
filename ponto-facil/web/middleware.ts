@@ -2,82 +2,55 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-// Função para decodificar o payload do JWT e obter o exp
-function decodeJWT(token) {
-  const payloadBase64 = token.split('.')[1];
-  const payloadDecoded = Buffer.from(payloadBase64, 'base64').toString('utf-8');
+// Decodificador de JWT alternativo (compatível com Edge Runtime)
+function decodeJWT(token: any) {
+  const payloadBase64 = token.split(".")[1];
+  const payloadDecoded = atob(payloadBase64);
   return JSON.parse(payloadDecoded);
 }
 
 export async function middleware(req: NextRequest) {
   const signInUrl = new URL("/login", req.url);
-  const homeUrl = new URL("/", req.url)
 
-  console.log("req", req.nextUrl.pathname)
-  // Ignora a verificação nas rotas de login, registro e qualquer chamada que envolva o processo de autenticação
-  if (req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/Password/Reset" || req.nextUrl.pathname.startsWith("/Password/forget") || req.nextUrl.pathname.startsWith("/api/auth")) {
+  console.log("Verificando middleware para:", req.nextUrl.pathname);
+
+  // Rotas públicas ou relacionadas à autenticação
+  if (
+    ["/login", "/Password/Reset", "/Password/forget", "/api/auth"].some((path) =>
+      req.nextUrl.pathname.startsWith(path)
+    )
+  ) {
     return NextResponse.next();
   }
 
-
-
-  if (req.nextUrl.pathname === "/register") {
-    return NextResponse.redirect(signInUrl);
-  }
-
-
-
-  // Obtém o token de sessão do NextAuth
+  // Obtém o token de sessão
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  console.log("Token obtido pelo getToken:", token);
+  console.log("Token obtido pelo middleware:", token);
 
-  // Se o token não estiver presente, redireciona para a página de login
-  if (!token || !token.accessToken) {
-    console.log("Token não encontrado ou inválido. Redirecionando para a página de login.");
+  if (!token?.accessToken) {
+    console.log("Token ausente ou inválido. Redirecionando para login.");
     return NextResponse.redirect(signInUrl);
   }
 
-  // Decodifica o token JWT para obter o valor de `exp`
+  // Decodificar e verificar expiração do token
   let decodedToken;
   try {
     decodedToken = decodeJWT(token.accessToken);
+    const currentTime = Math.floor(Date.now() / 1000);
 
-
-    // if(decodedToken.roles[0] !== "ADMIN" && req.nextUrl.pathname ==="/register"){
-    //   return NextResponse.redirect(homeUrl);
-    // }
-
+    if (decodedToken.exp && decodedToken.exp < currentTime) {
+      console.log("Token expirado. Redirecionando para login.");
+      return NextResponse.redirect(signInUrl);
+    }
   } catch (error) {
-    console.error("Erro ao decodificar o token JWT:", error);
+    console.error("Erro ao decodificar token:", error);
     return NextResponse.redirect(signInUrl);
   }
 
-  const tokenExp = decodedToken.exp;
-  const currentTime = Math.floor(Date.now() / 1000); // Tempo atual em segundos desde a época Unix
-
-  // Exibe os valores de `exp` e `currentTime` para debug
-  console.log("Valor de token.exp:", tokenExp);
-  console.log("Tempo atual (currentTime):", currentTime);
-  console.log("Condição de expiração (token.exp < currentTime):", tokenExp < currentTime);
-
-  // Verifica se o token está expirado
-  if (tokenExp && tokenExp < currentTime) {
-    console.log("Token expirado. Redirecionando para a tela de login.");
-
-    // Remove os cookies de sessão de autenticação ao redirecionar
-    const response = NextResponse.redirect(signInUrl);
-    response.cookies.set("next-auth.session-token", "", { path: "/", maxAge: 0 });
-    response.cookies.set("next-auth.csrf-token", "", { path: "/", maxAge: 0 });
-    return response; // Redireciona para a página de login
-  } else {
-    console.log("Token ainda é válido.");
-  }
-
+  console.log("Token válido. Prosseguindo...");
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next|login|register|favicon.ico|public).*)",
-  ], // Protege todas as rotas, exceto login, registro, arquivos estáticos e API de autenticação
+  matcher: ["/((?!_next|login|register|favicon.ico|public).*)"],
 };
