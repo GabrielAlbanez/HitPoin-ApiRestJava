@@ -280,38 +280,40 @@ public class UserController {
     public ResponseEntity<?> uploadUserImage(@RequestParam("file") MultipartFile file, Authentication authentication) {
         String idUser = authentication.getName();
         UUID userId = UUID.fromString(idUser);
-
+    
+        // Define o caminho do arquivo dentro do container
         String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        Path projectDir = Paths.get(System.getProperty("user.dir"), "HitPoint", uploadDirectory);
-        Path filePath = projectDir.resolve(filename);
-
+        Path uploadPath = Paths.get(uploadDirectory); // Diretório vindo do application.properties
+        Path filePath = uploadPath.resolve(filename);
+    
         try {
             // Garante que o diretório exista
-            if (!Files.exists(projectDir)) {
-                Files.createDirectories(projectDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
             }
-
+    
             // Salva o arquivo no diretório especificado
             file.transferTo(filePath.toFile());
-
+    
             // Atualiza o caminho da imagem no banco de dados
             Optional<User> userOptional = userRepository.findById(userId);
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
+                // Salva o caminho relativo para acesso HTTP
                 user.setImagePath("uploads/images/" + filename);
                 userRepository.save(user);
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado");
             }
-
+    
             // Limpeza de imagens não utilizadas
             cleanupUnusedImages();
-
+    
             // Retorna o caminho da imagem e uma mensagem de sucesso
             return ResponseEntity.ok(Map.of(
                     "message", "Imagem enviada com sucesso!",
                     "imagePath", "uploads/images/" + filename));
-
+    
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar a imagem");
@@ -320,20 +322,20 @@ public class UserController {
 
     // Método para limpeza de imagens não utilizadas
     private void cleanupUnusedImages() {
-        Path projectDir = Paths.get(System.getProperty("user.dir"), "HitPoint", uploadDirectory);
-
+        // Usar o diretório de uploads definido no application.properties
+        Path uploadPath = Paths.get(uploadDirectory);
+    
         // Recupera os caminhos das imagens que estão sendo utilizadas no banco de dados
         List<String> usedImagePaths = userRepository.findAll().stream()
                 .map(User::getImagePath)
                 .filter(path -> path != null && !path.isEmpty())
                 .collect(Collectors.toList());
-
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(projectDir)) {
+    
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(uploadPath)) {
             for (Path filePath : directoryStream) {
-                String relativePath = projectDir.relativize(filePath).toString().replace("\\", "/");
-
+                String relativePath = uploadPath.relativize(filePath).toString().replace("\\", "/");
+    
                 // Se o caminho da imagem não estiver na lista de imagens utilizadas, deletamos
-                // o arquivo
                 if (!usedImagePaths.contains("uploads/images/" + relativePath)) {
                     Files.delete(filePath);
                     System.out.println("Imagem deletada: " + filePath);
