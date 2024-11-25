@@ -31,6 +31,19 @@ export const Navbar = () => {
   const { data: session, status } = useSession();
   const stompClientRef = useRef(null);
 
+  // Tipando o usuário
+  type User = {
+    username: string;
+    email: string;
+    token: string;
+    roles: string[];
+    cargaHoraria: string;
+    cargo: string;
+    imagePath?: string;
+  };
+
+  const typedUser = session?.user as User; // Cast para tipar corretamente
+
   useEffect(() => {
     const setupWebSocket = () => {
       const socket = new SockJS("https://hitpoint-backend-latest.onrender.com/ws");
@@ -58,7 +71,7 @@ export const Navbar = () => {
 
     const handleTabClose = () => {
       if (stompClientRef.current?.connected) {
-        const username = session?.user?.username || "Desconhecido";
+        const username = typedUser?.username || "Desconhecido";
         stompClientRef.current.publish({
           destination: "/app/status",
           body: JSON.stringify({ username, status: "inactive" }),
@@ -67,16 +80,15 @@ export const Navbar = () => {
       }
     };
 
-    // Adiciona eventos para fechar a aba
     window.addEventListener("beforeunload", handleTabClose);
 
     return () => {
       window.removeEventListener("beforeunload", handleTabClose);
     };
-  }, [session]);
+  }, [typedUser]);
 
   const handleLogout = async () => {
-    const username = session?.user?.username || "Desconhecido";
+    const username = typedUser?.username || "Desconhecido";
 
     if (stompClientRef.current?.connected) {
       stompClientRef.current.publish({
@@ -105,7 +117,7 @@ export const Navbar = () => {
           </NextLink>
         </NavbarBrand>
         <ul className="hidden lg:flex gap-4 justify-start ml-2">
-          {session?.user.roles[0] === "BASIC" &&
+          {typedUser?.roles[0] === "BASIC" &&
             siteConfig.navItems.map((item) => (
               <NavbarItem key={item.href} isActive={pathname === item.href}>
                 <NextLink
@@ -121,7 +133,7 @@ export const Navbar = () => {
                 </NextLink>
               </NavbarItem>
             ))}
-          {session?.user.roles[0] === "ADMIN" && (
+          {typedUser?.roles[0] === "ADMIN" && (
             <>
               <NavbarItem>
                 <NextLink
@@ -152,7 +164,7 @@ export const Navbar = () => {
               </NavbarItem>
             </>
           )}
-          {session?.user.roles[0] === "BASIC" && (
+          {typedUser?.roles[0] === "BASIC" && (
             <NavbarItem>
               <NextLink
                 className={clsx(
@@ -177,7 +189,7 @@ export const Navbar = () => {
       >
         <ThemeSwitch />
         <NavbarItem className="hidden md:flex">
-          {!session?.user ? (
+          {!typedUser ? (
             <Button
               as={Link}
               className="text-sm font-normal text-default-600 bg-default-100"
@@ -189,7 +201,7 @@ export const Navbar = () => {
               Entrar
             </Button>
           ) : (
-            <UserAvatar user={session.user} onClick={handleLogout} />
+            <UserAvatar user={typedUser} onClick={handleLogout} />
           )}
         </NavbarItem>
       </NavbarContent>
@@ -203,14 +215,14 @@ export const Navbar = () => {
       {/* Navbar Menu for Mobile */}
       <NavbarMenu>
         <div className="mx-4 mt-2 flex flex-col gap-2">
-          {!session ? (
+          {!typedUser ? (
             <NavbarMenuItem>
               <Link href="/login" color="primary" size="lg">
                 Entrar
               </Link>
             </NavbarMenuItem>
           ) : (
-            (session?.user?.roles[0] == "ADMIN"
+            (typedUser.roles[0] == "ADMIN"
               ? siteConfig.navMenuItemsAdm
               : siteConfig.navMenuItems
             ).map((item, index) => (
