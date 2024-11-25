@@ -103,7 +103,7 @@ const AdminPage = () => {
       const usersWithValues = response.data.map((user) => ({
         ...user,
         role: user.cargo || "undefined",
-        status: user.status || "inactive",
+        status: user.userName === "ADMIN" ? "active" : user.status || "inactive" ,
         cargaHoraria: user.cargaHoraria || "undefined",
       }));
 
@@ -131,10 +131,11 @@ const AdminPage = () => {
       onConnect: () => {
         stompClient.subscribe("/topic/status", (message) => {
           const updatedUsers = JSON.parse(message.body);
+          console.log("Dados recebidos pelo WebSocket:", updatedUsers);
           setUsers((prevUsers) =>
             prevUsers.map((user) => ({
               ...user,
-              status: updatedUsers[user.userName] || user.status,
+              status: updatedUsers[user.userName] || user.status, // Mantém o status atual se não houver atualização.
             }))
           );
         });
@@ -234,7 +235,6 @@ const AdminPage = () => {
       );
       setSelectedUser({ ...user, pontos: response.data });
     } catch (error) {
-      console.error("Erro ao carregar os pontos do usuário:", error);
     }
   };
 

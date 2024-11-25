@@ -44,6 +44,7 @@ public class AdminUserConfig implements CommandLineRunner {
                     user.setUserName("ADMIN");
                     user.setPassWord(bCryptPasswordEncoder.encode("123")); // Passe a senha a ser codificada
                     user.setRoles(Set.of(roleAdmin));
+                    user.setEmail("admin@gmail.com");
                     userRepository.save(user);
                 });
 
