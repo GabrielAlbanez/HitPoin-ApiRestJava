@@ -55,7 +55,7 @@ const Profile = () => {
 
   const userImage =
     session?.user.imagePath && !preview
-      ? `http://localhost:8081/api/${session.user.imagePath}`
+      ? `https://hitpoint-backend-latest.onrender.com/api/${session.user.imagePath}`
       : preview || defaultAvatar;
 
   const handleImageSelect = (event: ChangeEvent<HTMLInputElement>) => {

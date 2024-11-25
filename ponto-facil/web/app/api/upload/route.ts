@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Faça a requisição para o backend Spring para upload da imagem
-  const response = await fetch("http://localhost:8081/usuarios/imageUpload", {
+  const response = await fetch("https://hitpoint-backend-latest.onrender.com/usuarios/imageUpload", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${session.user.token}`,

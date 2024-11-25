@@ -19,7 +19,7 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials: Credentials) {
         try {
-          const loginResponse = await axios.post("http://localhost:8081/auth/Login", {
+          const loginResponse = await axios.post("https://hitpoint-backend-latest.onrender.com/auth/Login", {
             email: credentials.email,
             password: credentials.password,
           });
@@ -45,7 +45,7 @@ export const authOptions: AuthOptions = {
         const accessToken = user?.token || token.accessToken;
 
         try {
-          const profileResponse = await axios.get("http://localhost:8081/auth/profile", {
+          const profileResponse = await axios.get("https://hitpoint-backend-latest.onrender.com/auth/profile", {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
 

@@ -90,7 +90,7 @@ const AdminPage = () => {
     const token = session.user.token;
     try {
       const response = await axios.get(
-        "http://localhost:8081/usuarios/allUsers",
+        "https://hitpoint-backend-latest.onrender.com/usuarios/allUsers",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -248,7 +248,7 @@ const AdminPage = () => {
     switch (columnKey) {
       case "name":
         const avatarSrc = user?.imagePath
-          ? `http://localhost:8081/api/${user.imagePath}`
+          ? `https://hitpoint-backend-latest.onrender.com/api/${user.imagePath}`
           : determineDefaultAvatar(user.userName);
         return (
           <User

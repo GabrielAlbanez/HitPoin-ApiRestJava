@@ -36,7 +36,7 @@ const getDefaultAvatar = (username: string): string => {
 
 export const UserAvatar: React.FC<UserAvatarProps> = ({ user, onClick }) => {
   const avatarSrc = user.imagePath
-    ? `http://localhost:8081/api/${user.imagePath}`
+    ? `https://hitpoint-backend-latest.onrender.com/api/${user.imagePath}`
     : getDefaultAvatar(user.username);
 
   return (

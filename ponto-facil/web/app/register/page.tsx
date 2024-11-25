@@ -52,7 +52,7 @@ export default function RegisterPage() {
 
 
       const response = await fetch(
-        "http://localhost:8081/usuarios/CreateUser",
+        "https://hitpoint-backend-latest.onrender.com/usuarios/CreateUser",
         {
           method: "POST",
           headers: {
