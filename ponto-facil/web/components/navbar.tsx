@@ -195,7 +195,7 @@ export const Navbar = () => {
       </NavbarContent>
 
       {/* Mobile Menu Toggle */}
-      <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
+      <NavbarContent className="md:hidden basis-1 pl-4" justify="end">
         <ThemeSwitch />
         <NavbarMenuToggle />
       </NavbarContent>

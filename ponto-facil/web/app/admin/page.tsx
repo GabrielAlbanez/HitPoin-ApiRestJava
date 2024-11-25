@@ -103,7 +103,7 @@ const AdminPage = () => {
       const usersWithValues = response.data.map((user) => ({
         ...user,
         role: user.cargo || "undefined",
-        status: user.status || "active",
+        status: user.status || "inactive",
         cargaHoraria: user.cargaHoraria || "undefined",
       }));
 

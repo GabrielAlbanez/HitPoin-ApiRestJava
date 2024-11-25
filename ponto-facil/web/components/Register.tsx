@@ -83,7 +83,7 @@ export default function Register() {
 
   return (
     <form
-      className="container w-full h-full flex flex-col gap-5 py-4 justify-between"
+     className="container w-full sm:max-h-[500px] overflow-auto sm:overflow-x-hidden flex flex-col gap-5 py-4 justify-between"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="flex flex-col text-left justify-center gap-2">
