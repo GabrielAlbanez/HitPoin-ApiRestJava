@@ -51,7 +51,7 @@ const ResetPassword = () => {
         setSuccessMessage(null);
 
         try {
-            const response = await fetch("http://localhost:8081/usuarios/reset-password", {
+            const response = await fetch("https://hitpoint-backend-latest.onrender.com/usuarios/reset-password", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

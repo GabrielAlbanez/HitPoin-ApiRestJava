@@ -39,6 +39,9 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ user, onClick }) => {
     ? `https://hitpoint-backend-latest.onrender.com/api/${user.imagePath}`
     : getDefaultAvatar(user.username);
 
+
+    // console.log("url",`https://hitpoint-backend-latest.onrender.com/api/${user.imagePath}`)
+
   return (
     <Dropdown placement="bottom-end">
       <DropdownTrigger>

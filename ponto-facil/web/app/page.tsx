@@ -101,7 +101,7 @@ export default function Home() {
       console.log("Requisição para o backend com:", pontoRequestData);
 
       const response = await axios.post<PontoResponse>(
-        "http://localhost:8081/usuarios/HitPoint",
+        "https://hitpoint-backend-latest.onrender.com/usuarios/HitPoint",
         pontoRequestData,
         {
           headers: {

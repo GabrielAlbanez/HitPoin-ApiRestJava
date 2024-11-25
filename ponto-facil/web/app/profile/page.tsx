@@ -1,6 +1,7 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { Session } from "next-auth";
 import {
   Card,
   CardHeader,
@@ -30,11 +31,15 @@ interface UserProfile {
 }
 
 const Profile = () => {
-  const { data: session, update } = useSession() as { data: { user: UserProfile } | null };
+  const { data: session, update } = useSession() as {
+    data: { user: UserProfile } | null;
+    update: (data?: any) => Promise<Session>;
+  };
 
   const determineDefaultAvatar = (username: string): string => {
-    const isFemale =
-      ["a", "e", "i", "y"].includes(username[username.length - 1].toLowerCase());
+    const isFemale = ["a", "e", "i", "y"].includes(
+      username[username.length - 1].toLowerCase()
+    );
 
     return isFemale
       ? "https://cdnb.artstation.com/p/assets/images/images/042/809/195/large/mace-tan-mace-kayle-fanart-finaledit.jpg?1635490851"
@@ -42,7 +47,7 @@ const Profile = () => {
   };
 
   const defaultAvatar = session?.user.username
-    ? determineDefaultAvatar(session.user.username)
+    ? determineDefaultAvatar(session?.user.username)
     : "https://via.placeholder.com/150";
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -51,7 +56,7 @@ const Profile = () => {
   const inputFileRef = useRef<HTMLInputElement | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  if (!session) return <div>Carregando...</div>;
+  if (!session?.user) return <div>Carregando...</div>;
 
   const userImage =
     session?.user.imagePath && !preview
@@ -68,7 +73,7 @@ const Profile = () => {
 
   const handleConfirmUpload = () => {
     if (!selectedImage) {
-      toast.error("Nenhuma imagem selecionada", { theme: "colored" });
+      toast.error("Nenhuma imagem selecionada");
       return;
     }
 
@@ -85,10 +90,14 @@ const Profile = () => {
             });
 
             if (response.ok) {
-              const data = (await response.json()) as { message: string; imagePath: string };
+              const data = (await response.json()) as {
+                message: string;
+                imagePath: string;
+              };
 
               // Atualiza a sessão com o novo caminho da imagem
               await update({
+                ...session,
                 user: {
                   ...session.user,
                   imagePath: data.imagePath,
@@ -97,7 +106,7 @@ const Profile = () => {
 
               setSelectedImage(null);
               setPreview(null);
-              onOpenChange(false);
+              onOpenChange();
               resolve("Imagem enviada com sucesso!");
             } else {
               reject("Erro ao enviar a imagem");
@@ -111,7 +120,6 @@ const Profile = () => {
           pending: "Enviando imagem...",
           success: "Imagem enviada com sucesso!",
           error: "Erro ao enviar a imagem",
-          theme: "colored",
         }
       );
     });
@@ -128,14 +136,18 @@ const Profile = () => {
 
   return (
     <div className="flex justify-center items-center min-h-full">
-      <ToastContainer position="bottom-right" autoClose={5000} hideProgressBar={false} />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+      />
 
       <Card className="w-full max-w-xl md:max-w-lg lg:max-w-2xl shadow-xl border-[1px] border-purple-500 rounded-3xl p-8 bg-zinc-900 text-white">
         <CardHeader className="flex flex-col items-center text-center space-y-2">
           <Avatar
             isBordered
             color="secondary"
-            size="xl"
+            size="lg"
             src={userImage}
             alt="User Avatar"
             className="w-32 h-32 sm:w-36 sm:h-36 mb-4 rounded-full border-4 border-white"
@@ -144,23 +156,29 @@ const Profile = () => {
           <h1 className="font-bold text-2xl sm:text-3xl mb-1">
             {session.user.username || "Usuário"}
           </h1>
-          <p className="text-sm sm:text-lg text-gray-200">{session.user.email}</p>
+          <p className="text-sm sm:text-lg text-gray-200">
+            {session.user.email}
+          </p>
         </CardHeader>
 
         <Divider className="my-6 bg-white" />
 
         <CardBody className="text-center space-y-4 text-sm sm:text-lg">
           <p>
-            <strong>Cargo:</strong> {session.user.cargo || "Cargo não informado"}
+            <strong>Cargo:</strong>{" "}
+            {session.user.cargo || "Cargo não informado"}
           </p>
           <p>
-            <strong>Carga Horária:</strong> {session.user.cargaHoraria || "Não especificada"}
+            <strong>Carga Horária:</strong>{" "}
+            {session.user.cargaHoraria || "Não especificada"}
           </p>
           <p>
-            <strong>Papel:</strong> {session.user.roles?.[0] || "Não especificado"}
+            <strong>Papel:</strong>{" "}
+            {session.user.roles?.[0] || "Não especificado"}
           </p>
           <p>
-            <strong>Token:</strong> {session.user.token ? "Ativo" : "Inativo"}
+            <strong>Token:</strong>{" "}
+            {session.user.token ? "Ativo" : "Inativo"}
           </p>
         </CardBody>
       </Card>
@@ -168,9 +186,11 @@ const Profile = () => {
       {/* Modal para upload de imagem */}
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent>
-          {(onClose) => (
+          {() => (
             <>
-              <ModalHeader className="flex flex-col gap-1">Escolher nova imagem de perfil</ModalHeader>
+              <ModalHeader className="flex flex-col gap-1">
+                Escolher nova imagem de perfil
+              </ModalHeader>
               <ModalBody>
                 <input
                   type="file"
@@ -182,15 +202,27 @@ const Profile = () => {
                 <Button onPress={handleOpenFileInput}>Escolher Imagem</Button>
                 {preview && (
                   <div className="mt-4">
-                    <img src={preview} alt="Preview" className="w-56 h-52 rounded-full mx-auto" />
+                    <img
+                      src={preview}
+                      alt="Preview"
+                      className="w-56 h-52 rounded-full mx-auto"
+                    />
                   </div>
                 )}
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" variant="light" onPress={handleRemoveSelectedImage}>
+                <Button
+                  color="danger"
+                  variant="light"
+                  onPress={handleRemoveSelectedImage}
+                >
                   Excluir Imagem
                 </Button>
-                <Button color="primary" onPress={handleConfirmUpload} disabled={isPending}>
+                <Button
+                  color="primary"
+                  onPress={handleConfirmUpload}
+                  disabled={isPending}
+                >
                   {isPending ? "Carregando..." : "Confirmar Upload"}
                 </Button>
               </ModalFooter>

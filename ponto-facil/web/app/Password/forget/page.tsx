@@ -31,7 +31,7 @@ const ForgetPassword = () => {
         setSuccessMessage(null);
 
         try {
-            const response = await fetch("http://localhost:8081/usuarios/forgot-password", {
+            const response = await fetch("https://hitpoint-backend-latest.onrender.com/usuarios/forgot-password", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -33,7 +33,7 @@ export const Navbar = () => {
 
   useEffect(() => {
     const setupWebSocket = () => {
-      const socket = new SockJS("http://localhost:8081/ws");
+      const socket = new SockJS("https://hitpoint-backend-latest.onrender.com/ws");
       const stompClient = new Client({
         webSocketFactory: () => socket,
         debug: (str) => console.log("WebSocket Debug:", str),
@@ -172,7 +172,7 @@ export const Navbar = () => {
 
       {/* Navbar End Content */}
       <NavbarContent
-        className="hidden sm:flex basis-1/5 sm:basis-full"
+        className="hidden md:flex basis-1/5 md:basis-full"
         justify="end"
       >
         <ThemeSwitch />

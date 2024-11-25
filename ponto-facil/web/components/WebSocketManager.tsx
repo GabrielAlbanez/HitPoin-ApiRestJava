@@ -12,7 +12,7 @@ const WebSocketManager = () => {
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
       // Configuração do WebSocket
-      const socket = new SockJS("http://localhost:8081/ws");
+      const socket = new SockJS("https://hitpoint-backend-latest.onrender.com/ws");
       const stompClient = new Client({
         webSocketFactory: () => socket,
         debug: (str) => console.log("WebSocket Debug:", str),

@@ -124,7 +124,7 @@ const AdminPage = () => {
   }, [session, status, router]);
 
   useEffect(() => {
-    const socket = new SockJS("http://localhost:8081/ws");
+    const socket = new SockJS("https://hitpoint-backend-latest.onrender.com/ws");
     const stompClient = new Client({
       webSocketFactory: () => socket,
       debug: (str) => console.log(str),
@@ -191,7 +191,7 @@ const AdminPage = () => {
     startTransition(() => {
       toast.promise(
         axios.delete(
-          `http://localhost:8081/usuarios/deleteUser/${selectedUser.userId}`,
+          `https://hitpoint-backend-latest.onrender.com/usuarios/deleteUser/${selectedUser.userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -224,7 +224,7 @@ const AdminPage = () => {
     try {
       const token = session?.user.token;
       const response = await axios.get(
-        `http://localhost:8081/usuarios/${user.userId}/pontos`,
+        `https://hitpoint-backend-latest.onrender.com/usuarios/${user.userId}/pontos`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -244,6 +244,7 @@ const AdminPage = () => {
   };
 
   const renderCell = useCallback((user, columnKey) => {
+    console.log("renderCell",`https://hitpoint-backend-latest.onrender.com/api/${user.imagePath}` )
     const cellValue = user[columnKey];
     switch (columnKey) {
       case "name":
@@ -363,10 +364,7 @@ const AdminPage = () => {
       {topContent}
       <Table
         aria-label="Tabela de usuários"
-        css={{
-          height: "auto",
-          minWidth: "100%",
-        }}
+
       >
         <TableHeader columns={columns}>
           {(column) => (
@@ -395,10 +393,6 @@ const AdminPage = () => {
           <ModalHeader>Registrar Novo Usuário</ModalHeader>
           <ModalBody>
             <Register
-              onRegisterComplete={() => {
-                fetchUsers();
-                setIsRegisterModalOpen(false);
-              }}
             />
           </ModalBody>
         </ModalContent>
@@ -411,7 +405,7 @@ const AdminPage = () => {
               <User
                 avatarProps={{
                   src: selectedUser?.imagePath
-                    ? `http://localhost:8081/api/${selectedUser.imagePath}`
+                    ? `https://hitpoint-backend-latest.onrender.com/api/${selectedUser.imagePath}`
                     : determineDefaultAvatar(selectedUser?.userName || "User"),
                   size: "lg",
                 }}
@@ -424,10 +418,7 @@ const AdminPage = () => {
             {selectedUser?.pontos && selectedUser.pontos.length > 0 ? (
               <Table
                 aria-label="Tabela de Pontos do Usuário"
-                css={{
-                  height: "auto",
-                  minWidth: "100%",
-                }}
+   
               >
                 <TableHeader>
                   <TableColumn>Data</TableColumn>
@@ -468,7 +459,7 @@ const AdminPage = () => {
                 <img
                   src={
                     selectedUser.imagePath
-                      ? `http://localhost:8081/api/${selectedUser.imagePath}`
+                      ? `https://hitpoint-backend-latest.onrender.com/api/${selectedUser.imagePath}`
                       : determineDefaultAvatar(selectedUser.userName)
                   }
                   alt={selectedUser.userName}
