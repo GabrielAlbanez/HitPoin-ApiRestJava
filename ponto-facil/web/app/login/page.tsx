@@ -40,7 +40,7 @@ export default function LoginPage() {
     if (status === "loading") return;
 
     if (session) {
-      (session?.user.roles[0] == "ADMIN") ? router.push("/admin") : router.push("/")
+      (session?.user.roles[0] == "ADMIN" || "BASIC") && router.push("/")
     }
   }, [session, status, router]);
 
