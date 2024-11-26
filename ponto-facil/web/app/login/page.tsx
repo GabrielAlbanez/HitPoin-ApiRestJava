@@ -146,15 +146,6 @@ export default function LoginPage() {
         </Button>
       </div>
 
-      <div className="w-full text-center">
-        Ainda não possui uma conta? Verifique o{" "}
-        <NextLink
-          className="data-[active=true]:text-primary data-[active=true]:font-large text-primary"
-          href={"/faq"}
-        >
-          FAQ
-        </NextLink>
-      </div>
 
       <div className="w-full text-center">
         Esqueceu sua senha? Clike {" "}

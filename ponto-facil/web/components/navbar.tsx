@@ -87,6 +87,11 @@ export const Navbar = () => {
     };
   }, [typedUser]);
 
+
+  const deleteCookie = (name: string) => {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  };
+
   const handleLogout = async () => {
     const username = typedUser?.username || "Desconhecido";
 
@@ -98,6 +103,8 @@ export const Navbar = () => {
       console.log(`Status de inatividade enviado para o usuário: ${username}`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+
+    deleteCookie("pontosBatidos");
 
     await signOut({ redirect: true, callbackUrl: "/login" });
   };

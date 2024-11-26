@@ -64,6 +64,7 @@ const ResetPassword = () => {
 
             if (response.ok) {
                 setSuccessMessage(responseText);
+                router.push("/login")
             } else if (response.status === 400) {
                 setServerError(responseText || "Token expirado ou inválido.");
             } else {

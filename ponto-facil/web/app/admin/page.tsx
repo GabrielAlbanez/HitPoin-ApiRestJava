@@ -398,7 +398,7 @@ const AdminPage = () => {
         </ModalContent>
       </Modal>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}  className="max-h-screen overflow-y-auto">
         <ModalContent>
           <ModalHeader>
             <div className="flex items-center gap-3">

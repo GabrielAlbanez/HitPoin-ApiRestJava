@@ -1,20 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
-import { 
-  Card, 
-  CardHeader, 
-  CardBody, 
-  Image, 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter, 
-  Button, 
-  useDisclosure 
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  Image,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  useDisclosure,
 } from "@nextui-org/react";
 
 // Tipos para dados de ponto individual
@@ -46,10 +45,47 @@ interface PontoResponse {
   ponto: PontoDataItem;
 }
 
+// Função para salvar dados nos cookies
+const setCookie = (name: string, value: string, days = 7) => {
+  if (!value || value.trim() === "") {
+    console.error("Tentativa de salvar um cookie com valor vazio ou inválido. Operação cancelada.");
+    return;
+  }
+
+  const date = new Date();
+  date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+  const expires = `expires=${date.toUTCString()}`;
+  document.cookie = `${name}=${encodeURIComponent(value)}; ${expires}; path=/`;
+};
+
+// Função para recuperar dados dos cookies
+const getCookie = (name: string): string | null => {
+  const nameEQ = `${name}=`;
+  const cookies = document.cookie.split(";");
+  for (let i = 0; i < cookies.length; i++) {
+    let cookie = cookies[i].trim();
+    if (cookie.indexOf(nameEQ) === 0) return cookie.substring(nameEQ.length);
+  }
+  return null;
+};
+
+// Função para decodificar e verificar o valor do cookie no console
+const logCookieValue = (cookieName: string) => {
+  const cookieValue = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${cookieName}=`))
+    ?.split("=")[1];
+
+  if (cookieValue) {
+    console.log("Cookie Decodificado:", JSON.parse(decodeURIComponent(cookieValue)));
+  } else {
+    console.log(`Cookie '${cookieName}' não encontrado.`);
+  }
+};
+
 export default function Home() {
   const { data: session, status } = useSession() as { data: UserSession; status: string };
-  const router = useRouter();
-  
+
   const [pontoData, setPontoData] = useState<PontoData>({
     entrada: null,
     pausa: null,
@@ -57,14 +93,25 @@ export default function Home() {
     saida: null,
   });
 
-  const { isOpen, onOpen, onOpenChange } = useDisclosure(); // Controle do modal
-  const [modalMessage, setModalMessage] = useState<string>(""); // Estado para a mensagem do modal
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [modalMessage, setModalMessage] = useState<string>("");
 
   useEffect(() => {
-    if (status === "loading") return;
-  }, [session, status, router]);
+    // Carregar os dados de pontos batidos dos cookies quando o componente for montado
+    const storedData = getCookie("pontosBatidos");
+    if (storedData) {
+      try {
+        const parsedData: PontoData = JSON.parse(decodeURIComponent(storedData));
+        setPontoData(parsedData);
+      } catch (error) {
+        console.error("Erro ao carregar os dados dos cookies:", error);
+      }
+    }
 
-  // Função para verificar a ordem dos pontos
+    // Logar o valor decodificado do cookie no console
+    logCookieValue("pontosBatidos");
+  }, []); // Executa apenas uma vez ao montar o componente
+
   const checkPointOrder = (tipoPonto: keyof PontoData): boolean => {
     if (tipoPonto === "entrada") return true;
     if (tipoPonto === "pausa" && pontoData.entrada) return true;
@@ -73,8 +120,18 @@ export default function Home() {
     return false;
   };
 
-  // Função para clicar no card de ponto
   const handleCardClick = async (tipoPonto: keyof PontoData) => {
+    // Verifica se o tipoPonto já está registrado nos cookies
+    const storedData = getCookie("pontosBatidos");
+    if (storedData) {
+      const parsedSessionData: PontoData = JSON.parse(decodeURIComponent(storedData));
+      if (parsedSessionData[tipoPonto]) {
+        setModalMessage(`Você já registrou o ponto de ${tipoPonto}.`);
+        onOpen();
+        return;
+      }
+    }
+
     // Verifica se o usuário é "ADMIN" e abre o modal
     if (session?.user?.roles[0] === "ADMIN") {
       setModalMessage("Usuários com o papel de 'ADMIN' não têm permissão para bater ponto.");
@@ -89,17 +146,8 @@ export default function Home() {
       return;
     }
 
-    // Verifica se o ponto já foi batido
-    if (pontoData[tipoPonto]) {
-      setModalMessage(`Você já registrou o ponto de ${tipoPonto}.`);
-      onOpen();
-      return;
-    }
-
     try {
       const pontoRequestData = { tipoPonto };
-      console.log("Requisição para o backend com:", pontoRequestData);
-
       const response = await axios.post<PontoResponse>(
         "https://hitpoint-backend-latest.onrender.com/usuarios/HitPoint",
         pontoRequestData,
@@ -111,22 +159,64 @@ export default function Home() {
         }
       );
 
-      console.log("Resposta do backend:", response.data);
-      
-      setPontoData((prevData) => ({
-        ...prevData,
-        [tipoPonto]: response.data.ponto,
-      }));
+      const novoPonto = response.data.ponto;
+
+      // Atualiza o estado e registra o ponto nos cookies
+      setPontoData((prevData) => {
+        const updatedData = { ...prevData, [tipoPonto]: novoPonto };
+
+        // Atualizar os cookies diretamente no handleCardClick
+        setCookie("pontosBatidos", JSON.stringify(updatedData));
+
+        // Logar o valor atualizado do cookie
+        logCookieValue("pontosBatidos");
+
+        return updatedData;
+      });
     } catch (error) {
       console.error("Erro ao fazer a requisição:", error);
+      setModalMessage("Ocorreu um erro ao registrar o ponto. Tente novamente.");
+      onOpen();
     }
+  };
+
+  const renderCard = (tipoPonto: keyof PontoData, label: string, bgColor: string) => {
+    const ponto = pontoData[tipoPonto];
+    const isClicked = !!ponto;
+
+    return (
+      <Card
+        className={`py-4 max-w-sm flex-shrink-0 shadow-lg transition-transform duration-200 hover:scale-105 rounded-lg ${bgColor}`}
+        style={{
+          opacity: isClicked ? 0.5 : 1,
+          cursor: isClicked ? "not-allowed" : "pointer",
+        }}
+      >
+        <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
+          <p className="text-tiny uppercase font-bold">{label}</p>
+          <h4 className="font-bold text-lg">{tipoPonto.toUpperCase()}</h4>
+          {ponto && (
+            <>
+              <p>Tipo de ponto: {ponto.tipoPonto}</p>
+              <p>Hora: {ponto.hora}</p>
+              <p>Data: {ponto.dia}/{ponto.mes}</p>
+            </>
+          )}
+        </CardHeader>
+        <CardBody
+          className="overflow-visible py-2"
+          onClick={() => handleCardClick(tipoPonto)}
+        >
+          <Image alt="Card background" className="object-cover rounded-xl" src="" width={270} />
+        </CardBody>
+      </Card>
+    );
   };
 
   if (status === "loading") return <div>Loading...</div>;
 
   return (
     <section className="flex flex-wrap justify-center gap-6 py-8 md:py-10">
-      {/* Modal de aviso */}
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent>
           {(onClose) => (
@@ -145,113 +235,10 @@ export default function Home() {
         </ModalContent>
       </Modal>
 
-      <div className="flex flex-col gap-4">
-        {/* Card de Entrada */}
-        <Card className="py-4 bg-gray-700 text-white max-w-sm flex-shrink-0 shadow-lg transition-transform duration-200 hover:scale-105 rounded-lg">
-          <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-            <p className="text-tiny uppercase font-bold">1</p>
-            <h4 className="font-bold text-lg">Bater Ponto</h4>
-            {pontoData.entrada && (
-              <>
-                <p>Tipo de ponto: {pontoData.entrada.tipoPonto}</p>
-                <p>Hora: {pontoData.entrada.hora}</p>
-                <p>Data: {pontoData.entrada.dia}/{pontoData.entrada.mes}</p>
-              </>
-            )}
-          </CardHeader>
-          <CardBody
-            className="overflow-visible py-2 cursor-pointer"
-            onClick={() => handleCardClick("entrada")}
-          >
-            <Image
-              alt="Card background"
-              className="object-cover rounded-xl"
-              src="" // Adicione a URL da imagem
-              width={270}
-            />
-          </CardBody>
-        </Card>
-
-        {/* Card de Pausa */}
-        <Card className="py-4 text-white bg-blue-400 max-w-sm flex-shrink-0 shadow-lg transition-transform duration-200 hover:scale-105 rounded-lg">
-          <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-            <p className="text-tiny uppercase font-bold">2</p>
-            <h4 className="font-bold text-lg">PAUSA</h4>
-            {pontoData.pausa && (
-              <>
-                <p>Tipo de ponto: {pontoData.pausa.tipoPonto}</p>
-                <p>Hora: {pontoData.pausa.hora}</p>
-                <p>Data: {pontoData.pausa.dia}/{pontoData.pausa.mes}</p>
-              </>
-            )}
-          </CardHeader>
-          <CardBody
-            className="overflow-visible py-2 cursor-pointer"
-            onClick={() => handleCardClick("pausa")}
-          >
-            <Image
-              alt="Card background"
-              className="object-cover rounded-xl"
-              src="" // Adicione a URL da imagem
-              width={270}
-            />
-          </CardBody>
-        </Card>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {/* Card de Retorno */}
-        <Card className="py-4 text-white bg-yellow-500 max-w-sm flex-shrink-0 shadow-lg transition-transform duration-200 hover:scale-105 rounded-lg">
-          <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-            <p className="text-tiny uppercase font-bold">3</p>
-            <h4 className="font-bold text-lg">RETORNO</h4>
-            {pontoData.retorno && (
-              <>
-                <p>Tipo de ponto: {pontoData.retorno.tipoPonto}</p>
-                <p>Hora: {pontoData.retorno.hora}</p>
-                <p>Data: {pontoData.retorno.dia}/{pontoData.retorno.mes}</p>
-              </>
-            )}
-          </CardHeader>
-          <CardBody
-            className="overflow-visible py-2 cursor-pointer"
-            onClick={() => handleCardClick("retorno")}
-          >
-            <Image
-              alt="Card background"
-              className="object-cover rounded-xl"
-              src="" // Adicione a URL da imagem
-              width={270}
-            />
-          </CardBody>
-        </Card>
-
-        {/* Card de Saída */}
-        <Card className="py-4 text-white bg-orange-600 max-w-sm flex-shrink-0 shadow-lg transition-transform duration-200 hover:scale-105 rounded-lg">
-          <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
-            <p className="text-tiny uppercase font-bold">4</p>
-            <h4 className="font-bold text-lg">SAÍDA</h4>
-            {pontoData.saida && (
-              <>
-                <p>Tipo de ponto: {pontoData.saida.tipoPonto}</p>
-                <p>Hora: {pontoData.saida.hora}</p>
-                <p>Data: {pontoData.saida.dia}/{pontoData.saida.mes}</p>
-              </>
-            )}
-          </CardHeader>
-          <CardBody
-            className="overflow-visible py-2 cursor-pointer"
-            onClick={() => handleCardClick("saida")}
-          >
-            <Image
-              alt="Card background"
-              className="object-cover rounded-xl"
-              src="" // Adicione a URL da imagem
-              width={270}
-            />
-          </CardBody>
-        </Card>
-      </div>
+      {renderCard("entrada", "1", "bg-gray-700 text-white")}
+      {renderCard("pausa", "2", "bg-blue-400 text-white")}
+      {renderCard("retorno", "3", "bg-yellow-500 text-white")}
+      {renderCard("saida", "4", "bg-orange-600 text-white")}
     </section>
   );
 }
