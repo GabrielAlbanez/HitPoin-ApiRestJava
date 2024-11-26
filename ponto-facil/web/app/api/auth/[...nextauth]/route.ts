@@ -18,6 +18,18 @@ interface CustomUser {
 }
 
 export const authOptions: AuthOptions = {
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax", // Troque para "none" se necessário em casos de CORS.
+        path: "/",
+      },
+    },
+  },
+  
   providers: [
     CredentialsProvider({
       name: "Credentials",

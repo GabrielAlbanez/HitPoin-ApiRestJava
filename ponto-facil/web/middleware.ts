@@ -24,7 +24,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Obtém o token de sessão
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET, raw: false });
   console.log("Token obtido pelo middleware:", token);
 
   if (!token?.accessToken) {
