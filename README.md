@@ -24,6 +24,7 @@ Ponto Fácil é uma aplicação web desenvolvida para facilitar o registro de po
 ## 📂 Estrutura de Pastas
 
 ### Frontend (ponto-facil/web)
+```arduino
   ponto-facil/web
   ├── .next               # Arquivos gerados durante o build do Next.js
   ├── .vscode             # Configurações do Visual Studio Code
@@ -45,9 +46,9 @@ Ponto Fácil é uma aplicação web desenvolvida para facilitar o registro de po
   ├── README.md           # Documentação do frontend
   ├── tailwind.config.js  # Configuração do Tailwind CSS
   └── tsconfig.json       # Configuração do TypeScript
-
+```
   ### Backend (HitPoin-ApiRestJava)
-
+```arduino
 HitPoin-ApiRestJava
 ├── mvnw                # Wrapper do Maven
 ├── src                 # Código-fonte principal
@@ -68,7 +69,7 @@ HitPoin-ApiRestJava
 ├── Dockerfile          # Arquivo para criação de imagem Docker
 ├── pom.xml             # Configurações e dependências do Maven
 └── README.md           # Documentação do backend
-
+```
 
 
 
