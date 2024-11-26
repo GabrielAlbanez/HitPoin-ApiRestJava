@@ -63,7 +63,9 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
             "http://localhost:3000", // Origem local para desenvolvimento
-            "https://hitpoint-backend-latest.onrender.com" // Origem do Render
+            "https://hitpoint-backend-latest.onrender.com",
+            "https://hit-poin-api-rest-java.vercel.app"
+            // Origem do Render
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

@@ -37,10 +37,10 @@ export const authOptions: AuthOptions = {
             password: credentials.password,
           });
 
-          const { acessToken } = loginResponse.data;
+          const { acessToken, response } = loginResponse.data;
 
           if (!acessToken) {
-            throw new Error("Falha na autenticação");
+            throw new Error(response || "Falha na autenticação");
           }
 
           // Obter informações detalhadas do perfil com o token
@@ -62,7 +62,7 @@ export const authOptions: AuthOptions = {
             imagePath: profileData.imagePath,
           } as CustomUser;
         } catch (error: any) {
-          const backendMessage = error.response?.data?.message || "Erro durante a autenticação";
+          const backendMessage = error.response?.data?.response || "Erro durante a autenticação";
           throw new Error(backendMessage);
         }
       },
