@@ -14,6 +14,7 @@ import tech.buildrun.springPonto.Repository.HitPointRepository;
 import tech.buildrun.springPonto.Repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -36,7 +37,9 @@ public class HitPointService {
 
             System.out.println("tipo ponto: " + dataPonto);
 
-            LocalDateTime dataAtual = LocalDateTime.now();
+            ZoneId zoneId = ZoneId.of("America/Sao_Paulo");
+
+            LocalDateTime dataAtual = LocalDateTime.now(zoneId);
 
             int dia = dataAtual.getDayOfMonth();
 
