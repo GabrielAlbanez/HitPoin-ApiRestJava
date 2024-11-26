@@ -186,7 +186,7 @@ export default function Home() {
 
     return (
       <Card
-        className={`py-4 max-w-sm flex-shrink-0 shadow-lg transition-transform duration-200 hover:scale-105 rounded-lg ${bgColor}`}
+        className={`py-4 max-w-sm flex-shrink-0  shadow-lg transition-transform duration-200 hover:scale-105 rounded-lg ${bgColor}`}
         style={{
           opacity: isClicked ? 0.5 : 1,
           cursor: isClicked ? "not-allowed" : "pointer",
@@ -216,7 +216,7 @@ export default function Home() {
   if (status === "loading") return <div>Loading...</div>;
 
   return (
-    <section className="flex flex-wrap justify-center gap-6 py-8 md:py-10">
+    <section className="flex flex-wrap justify-center  max-w-[100%]  gap-6 px-12 md:px-40 md:py-10">
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent>
           {(onClose) => (
