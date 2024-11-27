@@ -40,7 +40,7 @@ export default function LoginPage() {
     if (status === "loading") return;
 
     if (session) {
-      (session?.user.roles[0] == "ADMIN") ? router.push("/admin") : router.push("/profile")
+      (session?.user.roles[0] == "ADMIN") ? router.push("/") : router.push("/")
     }
   }, [session, status, router]);
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
     } else {
       setSuccessMessage("Logado com sucesso!");
       setServerError(null);
-;
+      router.push("/");
     }
 
     setLoading(false);
@@ -148,7 +148,7 @@ export default function LoginPage() {
 
 
       <div className="w-full text-center">
-        Esqueceu sua senha? Clike {" "}
+        Esqueceu sua senha? Clique {" "}
         <NextLink
           className="data-[active=true]:text-primary data-[active=true]:font-large text-primary"
           href={"/Password/forget"}
