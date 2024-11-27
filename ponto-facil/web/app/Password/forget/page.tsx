@@ -43,12 +43,11 @@ const ForgetPassword = () => {
             const responseText = await response.text();
             console.log("Resposta da API forgot-password:", responseText);
 
-            if (response.ok) {
-                if (responseText === "endereço de e-mail invalido" || "Um link de redefinição de senha já foi enviado para este e-mail") {
-                    setServerError(responseText)
-                } else {
+           if (response.ok && responseText) {
+                if (responseText == Link de redefinição de senha enviado para o e-mail: ${data.email}) {
                     setSuccessMessage(responseText);
-
+                }  else{
+                    setServerError(responseText);
                 }
             } else if (response.status === 401) {
                 setServerError(responseText || "Acesso Negado");
