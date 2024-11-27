@@ -287,11 +287,6 @@ const AdminPage = () => {
                 <EyeIcon />
               </Button>
             </Tooltip>
-            <Tooltip content="Editar">
-              <Button isIconOnly size="sm" variant="flat">
-                <EditIcon />
-              </Button>
-            </Tooltip>
             <Tooltip content="Excluir">
               <Button
                 isIconOnly
