@@ -98,10 +98,10 @@ HitPoin-ApiRestJava
 
 | Nome        | GitHub                                    |
 |-------------|-------------------------------------------|
-| **Caio**    | [GitHub](https://github.com/caio)         |
+| **Caio**    | [GitHub](https://github.com/caiobga99)         |
 | **Gabriel** | [GitHub](https://github.com/GabrielAlbanez) |
-| **Fernando**| [GitHub](https://github.com/fernando)     |
-| **Kaique**  | [GitHub](https://github.com/kaique)       |
+| **Fernando**| [GitHub](https://github.com/doylelete001)     |
+| **Kaique**  | [GitHub](https://github.com/2izii)       |
 
 ---
 
