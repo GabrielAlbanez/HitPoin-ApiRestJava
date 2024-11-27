@@ -12,7 +12,7 @@
 
         @Override
         public void registerStompEndpoints(StompEndpointRegistry registry) {
-            registry.addEndpoint("/ws").setAllowedOrigins("http://localhost:3000").withSockJS(); // Endpoint WebSocket
+            registry.addEndpoint("/ws").setAllowedOrigins("http://localhost:3000", "https://hit-poin-api-rest-java.vercel.app").withSockJS(); // Endpoint WebSocket
         }
 
         @Override
