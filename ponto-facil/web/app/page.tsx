@@ -15,6 +15,7 @@ import {
   Button,
   useDisclosure,
 } from "@nextui-org/react";
+import { TimerComponent } from "@/components/TimerComponent";
 
 // Tipos para dados de ponto individual
 interface PontoDataItem {
@@ -48,7 +49,9 @@ interface PontoResponse {
 // Função para salvar dados nos cookies
 const setCookie = (name: string, value: string, days = 7) => {
   if (!value || value.trim() === "") {
-    console.error("Tentativa de salvar um cookie com valor vazio ou inválido. Operação cancelada.");
+    console.error(
+      "Tentativa de salvar um cookie com valor vazio ou inválido. Operação cancelada."
+    );
     return;
   }
 
@@ -77,14 +80,20 @@ const logCookieValue = (cookieName: string) => {
     ?.split("=")[1];
 
   if (cookieValue) {
-    console.log("Cookie Decodificado:", JSON.parse(decodeURIComponent(cookieValue)));
+    console.log(
+      "Cookie Decodificado:",
+      JSON.parse(decodeURIComponent(cookieValue))
+    );
   } else {
     console.log(`Cookie '${cookieName}' não encontrado.`);
   }
 };
 
 export default function Home() {
-  const { data: session, status } = useSession() as { data: UserSession; status: string };
+  const { data: session, status } = useSession() as {
+    data: UserSession;
+    status: string;
+  };
 
   const [pontoData, setPontoData] = useState<PontoData>({
     entrada: null,
@@ -101,7 +110,9 @@ export default function Home() {
     const storedData = getCookie("pontosBatidos");
     if (storedData) {
       try {
-        const parsedData: PontoData = JSON.parse(decodeURIComponent(storedData));
+        const parsedData: PontoData = JSON.parse(
+          decodeURIComponent(storedData)
+        );
         setPontoData(parsedData);
       } catch (error) {
         console.error("Erro ao carregar os dados dos cookies:", error);
@@ -124,7 +135,9 @@ export default function Home() {
     // Verifica se o tipoPonto já está registrado nos cookies
     const storedData = getCookie("pontosBatidos");
     if (storedData) {
-      const parsedSessionData: PontoData = JSON.parse(decodeURIComponent(storedData));
+      const parsedSessionData: PontoData = JSON.parse(
+        decodeURIComponent(storedData)
+      );
       if (parsedSessionData[tipoPonto]) {
         setModalMessage(`Você já registrou o ponto de ${tipoPonto}.`);
         onOpen();
@@ -134,14 +147,18 @@ export default function Home() {
 
     // Verifica se o usuário é "ADMIN" e abre o modal
     if (session?.user?.roles[0] === "ADMIN") {
-      setModalMessage("Usuários com o papel de 'ADMIN' não têm permissão para bater ponto.");
+      setModalMessage(
+        "Usuários com o papel de 'ADMIN' não têm permissão para bater ponto."
+      );
       onOpen();
       return;
     }
 
     // Verifica a ordem dos pontos
     if (!checkPointOrder(tipoPonto)) {
-      setModalMessage("Por favor, siga a ordem correta: Entrada -> Pausa -> Retorno -> Saída.");
+      setModalMessage(
+        "Por favor, siga a ordem correta: Entrada -> Pausa -> Retorno -> Saída."
+      );
       onOpen();
       return;
     }
@@ -180,7 +197,11 @@ export default function Home() {
     }
   };
 
-  const renderCard = (tipoPonto: keyof PontoData, label: string, bgColor: string) => {
+  const renderCard = (
+    tipoPonto: keyof PontoData,
+    label: string,
+    bgColor: string
+  ) => {
     const ponto = pontoData[tipoPonto];
     const isClicked = !!ponto;
 
@@ -199,7 +220,9 @@ export default function Home() {
             <>
               <p>Tipo de ponto: {ponto.tipoPonto}</p>
               <p>Hora: {ponto.hora}</p>
-              <p>Data: {ponto.dia}/{ponto.mes}</p>
+              <p>
+                Data: {ponto.dia}/{ponto.mes}
+              </p>
             </>
           )}
         </CardHeader>
@@ -207,7 +230,12 @@ export default function Home() {
           className="overflow-visible py-2"
           onClick={() => handleCardClick(tipoPonto)}
         >
-          <Image alt="Card background" className="object-cover rounded-xl" src="" width={270} />
+          <Image
+            alt="Card background"
+            className="object-cover rounded-xl"
+            src=""
+            width={270}
+          />
         </CardBody>
       </Card>
     );
@@ -216,29 +244,34 @@ export default function Home() {
   if (status === "loading") return <div>Loading...</div>;
 
   return (
-    <section className="flex flex-wrap justify-center  max-w-[100%]  gap-6 px-12 md:px-40 md:py-10">
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">Atenção</ModalHeader>
-              <ModalBody>
-                <p>{modalMessage}</p>
-              </ModalBody>
-              <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
-                  Fechar
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+    <div className="flex flex-col items-center justify-center gap-7 md:gap-2">
+      <TimerComponent/>
+      <section className="flex flex-wrap justify-center  max-w-[100%]  gap-6 px-12 md:px-40 md:py-10">
+        <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+          <ModalContent>
+            {(onClose) => (
+              <>
+                <ModalHeader className="flex flex-col gap-1">
+                  Atenção
+                </ModalHeader>
+                <ModalBody>
+                  <p>{modalMessage}</p>
+                </ModalBody>
+                <ModalFooter>
+                  <Button color="danger" variant="light" onPress={onClose}>
+                    Fechar
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
 
-      {renderCard("entrada", "1", "bg-gray-700 text-white")}
-      {renderCard("pausa", "2", "bg-blue-400 text-white")}
-      {renderCard("retorno", "3", "bg-yellow-500 text-white")}
-      {renderCard("saida", "4", "bg-orange-600 text-white")}
-    </section>
+        {renderCard("entrada", "1", "bg-gray-700 text-white")}
+        {renderCard("pausa", "2", "bg-blue-400 text-white")}
+        {renderCard("retorno", "3", "bg-yellow-500 text-white")}
+        {renderCard("saida", "4", "bg-orange-600 text-white")}
+      </section>
+    </div>
   );
 }
