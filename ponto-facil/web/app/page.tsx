@@ -1,12 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import {
   Card,
   CardHeader,
   CardBody,
-  Image,
   Modal,
   ModalContent,
   ModalHeader,
@@ -48,13 +47,7 @@ interface PontoResponse {
 
 // Função para salvar dados nos cookies
 const setCookie = (name: string, value: string, days = 7) => {
-  if (!value || value.trim() === "") {
-    console.error(
-      "Tentativa de salvar um cookie com valor vazio ou inválido. Operação cancelada."
-    );
-    return;
-  }
-
+  if (!value || value.trim() === "") return;
   const date = new Date();
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = `expires=${date.toUTCString()}`;
@@ -72,23 +65,6 @@ const getCookie = (name: string): string | null => {
   return null;
 };
 
-// Função para decodificar e verificar o valor do cookie no console
-const logCookieValue = (cookieName: string) => {
-  const cookieValue = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(`${cookieName}=`))
-    ?.split("=")[1];
-
-  if (cookieValue) {
-    console.log(
-      "Cookie Decodificado:",
-      JSON.parse(decodeURIComponent(cookieValue))
-    );
-  } else {
-    console.log(`Cookie '${cookieName}' não encontrado.`);
-  }
-};
-
 export default function Home() {
   const { data: session, status } = useSession() as {
     data: UserSession;
@@ -104,9 +80,11 @@ export default function Home() {
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [modalMessage, setModalMessage] = useState<string>("");
+  const [isPending, startTransition] = useTransition();
+  const [loadingType, setLoadingType] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   useEffect(() => {
-    // Carregar os dados de pontos batidos dos cookies quando o componente for montado
     const storedData = getCookie("pontosBatidos");
     if (storedData) {
       try {
@@ -118,10 +96,7 @@ export default function Home() {
         console.error("Erro ao carregar os dados dos cookies:", error);
       }
     }
-
-    // Logar o valor decodificado do cookie no console
-    logCookieValue("pontosBatidos");
-  }, []); // Executa apenas uma vez ao montar o componente
+  }, []);
 
   const checkPointOrder = (tipoPonto: keyof PontoData): boolean => {
     if (tipoPonto === "entrada") return true;
@@ -131,70 +106,53 @@ export default function Home() {
     return false;
   };
 
-  const handleCardClick = async (tipoPonto: keyof PontoData) => {
-    // Verifica se o tipoPonto já está registrado nos cookies
-    const storedData = getCookie("pontosBatidos");
-    if (storedData) {
-      const parsedSessionData: PontoData = JSON.parse(
-        decodeURIComponent(storedData)
-      );
-      if (parsedSessionData[tipoPonto]) {
-        setModalMessage(`Você já registrou o ponto de ${tipoPonto}.`);
+  const handleCardClick = (tipoPonto: keyof PontoData) => {
+    if (isProcessing || loadingType === tipoPonto) return;
+
+    setIsProcessing(true);
+
+    startTransition(async () => {
+      setLoadingType(tipoPonto);
+
+      if (!checkPointOrder(tipoPonto)) {
+        setModalMessage(
+          "Por favor, siga a ordem correta: Entrada -> Pausa -> Retorno -> Saída."
+        );
         onOpen();
+        setLoadingType(null);
+        setIsProcessing(false);
         return;
       }
-    }
 
-    // Verifica se o usuário é "ADMIN" e abre o modal
-    if (session?.user?.roles[0] === "ADMIN") {
-      setModalMessage(
-        "Usuários com o papel de 'ADMIN' não têm permissão para bater ponto."
-      );
-      onOpen();
-      return;
-    }
+      try {
+        const response = await axios.post<PontoResponse>(
+          "https://hitpoint-backend-latest.onrender.com/usuarios/HitPoint",
+          { tipoPonto },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session?.user?.token}`,
+            },
+          }
+        );
 
-    // Verifica a ordem dos pontos
-    if (!checkPointOrder(tipoPonto)) {
-      setModalMessage(
-        "Por favor, siga a ordem correta: Entrada -> Pausa -> Retorno -> Saída."
-      );
-      onOpen();
-      return;
-    }
-
-    try {
-      const pontoRequestData = { tipoPonto };
-      const response = await axios.post<PontoResponse>(
-        "https://hitpoint-backend-latest.onrender.com/usuarios/HitPoint",
-        pontoRequestData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.user?.token}`,
-          },
-        }
-      );
-
-      const novoPonto = response.data.ponto;
-
-      // Atualiza o estado e registra o ponto nos cookies
-      setPontoData((prevData) => {
-        const updatedData = { ...prevData, [tipoPonto]: novoPonto };
-
-        // Atualizar os cookies diretamente no handleCardClick
-        setCookie("pontosBatidos", JSON.stringify(updatedData));
-
-        // Logar o valor atualizado do cookie
-        logCookieValue("pontosBatidos");
-
-        return updatedData;
-      });
-    } catch (error) {
-      console.error("Erro ao fazer a requisição:", error);
-      setModalMessage("Ocorreu um erro ao registrar o ponto. Tente novamente.");
-      onOpen();
-    }
+        const novoPonto = response.data.ponto;
+        setPontoData((prevData) => {
+          const updatedData = { ...prevData, [tipoPonto]: novoPonto };
+          setCookie("pontosBatidos", JSON.stringify(updatedData));
+          return updatedData;
+        });
+      } catch (error) {
+        console.error("Erro ao fazer a requisição:", error);
+        setModalMessage(
+          "Ocorreu um erro ao registrar o ponto. Tente novamente."
+        );
+        onOpen();
+      } finally {
+        setLoadingType(null);
+        setIsProcessing(false);
+      }
+    });
   };
 
   const renderCard = (
@@ -207,11 +165,11 @@ export default function Home() {
 
     return (
       <Card
-        className={`py-4 max-w-sm flex-shrink-0  shadow-lg transition-transform duration-200 hover:scale-105 rounded-lg ${bgColor}`}
-        style={{
-          opacity: isClicked ? 0.5 : 1,
-          cursor: isClicked ? "not-allowed" : "pointer",
-        }}
+        className={`py-4 min-w-[300px] min-h-[150px] max-w-[400px] max-h-[200px] flex-shrink-0 shadow-lg transition-transform duration-200 hover:scale-105 rounded-lg ${bgColor} ${
+          isClicked || loadingType === tipoPonto || isProcessing
+            ? "opacity-50 cursor-not-allowed"
+            : ""
+        }`}
       >
         <CardHeader className="pb-0 pt-2 px-4 flex-col items-start">
           <p className="text-tiny uppercase font-bold">{label}</p>
@@ -230,12 +188,7 @@ export default function Home() {
           className="overflow-visible py-2"
           onClick={() => handleCardClick(tipoPonto)}
         >
-          <Image
-            alt="Card background"
-            className="object-cover rounded-xl"
-            src=""
-            width={270}
-          />
+          {loadingType === tipoPonto && <div className="loader"></div>}
         </CardBody>
       </Card>
     );
@@ -245,8 +198,8 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-7 md:gap-2">
-      <TimerComponent/>
-      <section className="flex flex-wrap justify-center  max-w-[100%]  gap-6 px-12 md:px-40 md:py-10">
+      <TimerComponent />
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[90%] mx-auto py-10">
         <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
           <ModalContent>
             {(onClose) => (
