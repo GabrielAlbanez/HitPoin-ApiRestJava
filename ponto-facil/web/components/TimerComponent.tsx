@@ -10,7 +10,6 @@ export const TimerComponent = () => {
       setTime(new Date());
     }, 1000);
 
-    // Limpa o intervalo ao desmontar o componente
     return () => clearInterval(timer);
   }, []);
 
@@ -25,14 +24,11 @@ export const TimerComponent = () => {
   };
 
   return (
-    <div
-      style={{
-        fontFamily: "Arial, sans-serif",
-        fontSize: "30px",
-        textAlign: "center",
-      }}
-    >
-      {formatTime(time)}
+    <div className="flex flex-col items-center justify-center ">
+      <h2 className="text-xl font-bold text-gray-300">Horário Atual</h2>
+      <div className="bg-gray-800 text-white font-mono text-3xl py-4 px-8 rounded-lg shadow-lg mt-4">
+        {formatTime(time)}
+      </div>
     </div>
   );
 };
