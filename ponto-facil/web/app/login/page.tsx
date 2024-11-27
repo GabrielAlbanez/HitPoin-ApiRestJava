@@ -61,7 +61,7 @@ export default function LoginPage() {
     } else {
       setSuccessMessage("Logado com sucesso!");
       setServerError(null);
-      router.push("/");
+      router.push("/profile");
     }
 
     setLoading(false);
