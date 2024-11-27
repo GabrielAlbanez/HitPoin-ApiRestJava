@@ -78,6 +78,7 @@ export default function Register() {
       setServerError(error instanceof Error ? error.message : String(error));
     } finally {
       setLoading(false);
+      window.location.reload()
     }
   };
 
